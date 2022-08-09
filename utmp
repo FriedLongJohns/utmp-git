@@ -1,0 +1,149 @@
+#!/bin/bash
+mode=$1
+key=$2
+opt=$3
+
+if [ "X$mode" = "X" ]; then
+	cat << EOF
+utmp <mode> <key> [-p,-t]
+	DESC:
+		utmp stands for Ultra Chad Music Player, and it tries it's best to be that.
+		utmp only can download and play songs, and essentially has the same functionality as a Discord music bot, save for the fact it runs on your computer and permanently stores it's files.
+
+	TEXT COLORS:
+		green text is standard text, colored green to seperate from the terminal's white
+		orange text is a warning, either the program had to do extra work, or an error that will not stop utmp from running
+		red text is fatal error text, the program will stop after showing you red text
+		white text is utmp showing you what it's doing, or perhaps is generated as an error by utmp's commands
+
+	INPUTS:
+		<mode> : can be set to each of the following values:
+			list : show all songs in library (inside ~/utmp/ folder)
+			find : use key as \033[0;32msearch query\033[0;0m on youtube to find videos
+			down : use key as a \033[0;32link\033[0;0m to directly download videos
+			play : play videos from library using their indexes
+						 key 0 would play the first song in library
+						 key 0,4,2 would play the first, fifth, and then third song in library
+						 key all would play every single song in the library, in a random order
+
+		<key> : what this needs to be changes based on <mode>
+			<mode> is list : <key> can be nothing, but if something it will be used as a search keyword, only returning results with that text
+			<mode> is find : <key> can be anything (but not nothing), and make sure you put quotes around the text if it has spaces
+			<mode> is down : <key> should be a url
+			<mode> is play : <key> should be a bunch of numbers seperated by commas
+
+	OPTIONS:
+		-p : Play downloaded video, if any. Only works with <mode> as 'find' or 'down'
+		-t : Play video like -p, and then prompt for deletion.
+				 Reccomended to use -t when using 'find' mode as Youtube may not always return what you wanted
+EOF
+	exit 1
+fi
+
+DIR=~/utmp/
+[ ! -d $DIR ] && ( echo "\033[0;32mno existing DIR, creating new directory!\033[0;0m" && mkdir $DIR )
+
+echo ""
+
+if [ $mode = "list" ]; then
+	echo -e "\033[0;32mCurrent Stored Library:\033[0;0m"
+	echo -e "\033[0;32mKeyword: $key\033[0;0m"
+	count=0
+	find ~/utmp -type f -name "*$key*.mp3" -print0 | while IFS= read -r -d '' file; do
+	    echo -e "\033[0;32m$count\033[0;0m : $(basename $file)"
+			((count++))
+	done
+	echo -e "\033[0;32m----------------------\033[0;0m"
+
+elif [ "$mode" = "find" ] || [ "$mode" = "down" ]; then
+	[ -z "$key" ] && echo -e "\033[0;31mNeed <key> to search on Youtube!\033[0;0m" && exit 1
+	#^ there is key OR I exit now
+	if [ $mode = "find" ]; then
+		echo -e "\033[0;32mSearching for '$key'...\033[0;0m"
+		echo yt-dlp $key -f 139 --default-search auto --max-downloads 1 --abort-on-error --quiet
+		yt-dlp $key -f 139 --default-search auto --max-downloads 1 --abort-on-error --quiet
+	else
+		echo -e "\033[0;32mDownloading from '$key'...\033[0;0m"
+		echo yt-dlp "$key" -f 139 --max-downloads 1 --abort-on-error --quiet
+		yt-dlp "$key" -f 139 --max-downloads 1 --abort-on-error --quiet
+		#still force 1 download because we only move the 1 last download, not all downloaded
+	fi
+
+	name=$(ls -t | tail -1)
+	fname=$(echo $name | sed -e 's/ /\_/g')
+	echo -e "\033[0;32mDownloaded result: $name\033[0;0m"
+	echo -e "\033[0;32m               as: $fname\033[0;0m"
+
+	echo "mv \"$name\" ~/utmp/$fname"
+	mv "$name" ~/utmp/$fname
+
+	echo -e "\033[0;32mConverting result to mp3...\033[0;0m"
+	echo ffmpeg -i ~/utmp/$fname ~/utmp/$(echo $fname | sed -e 's,.m4a,.mp3,g') -loglevel fatal -y
+	ffmpeg -i ~/utmp/$fname ~/utmp/$(echo $fname | sed -e 's,.m4a,.mp3,g') -loglevel fatal -y
+	#-y to automatically overwrite files without prompting
+	echo -e "\033[0;32mConverted to: $(echo $fname | sed -e 's,.m4a,.mp3,g')\033[0;0m"
+
+	rm ~/utmp/$fname
+	echo -e "\033[0;32mRemoved old file\033[0;0m"
+
+	fname=$(echo $fname | sed -e 's,.m4a,.mp3,g')
+	echo -e "\033[0;32mDone downloading!\033[0;0m"
+
+	[ "$opt" = "-p" ] && ( echo -e "\033[0;32m[-p] Playing '$fname'\033[0;0m" && ffplay -i ~/utmp/$fname -showmode 1 -autoexit -volume 25 -loglevel fatal )
+
+	if [ "$opt" = "-t" ]; then
+		echo -e "\033[0;32m[-t] Playing '$fname'\033[0;0m"
+		echo ffplay -i ~/utmp/$fname -showmode 1 -autoexit -volume 25 -loglevel fatal
+		ffplay -i ~/utmp/$fname -showmode 1 -autoexit -volume 25 -loglevel fatal
+
+		read -r -p "Delete file? [N/y]: " inp
+		if [ "$inp" = "N" ]; then
+			echo -e "\033[0;32mWill not delete file\033[0;0m"
+		else
+			echo -e "\033[0;33mDeleting $fname!\033[0;0m"
+			echo rm ~/utmp/$fname
+			rm ~/utmp/$fname
+			echo -e "\033[0;32mDone\033[0;0m"
+		fi
+	fi
+
+elif [ $mode = "play" ]; then
+	[ -z "$key" ] && echo -e "\033[0;31mNeed <key> to play songs!\033[0;0m" && exit 1
+
+	if [ "$key" = "all" ]; then
+		echo -e "\033[0;33mPlaying ALL songs!\033[0;0m"
+		queue=$(find ~/utmp -type f -name "*.mp3" | sort -R)
+
+		for file in $queue; do
+				echo -e "\033[0;32mPlaying $file\033[0;0m"
+				echo ffplay -i $file -showmode 1 -autoexit -volume 25 -loglevel fatal
+				ffplay -i $file -showmode 1 -autoexit -volume 25 -loglevel fatal
+				((count++))
+		done
+	fi
+
+	IFS=',' read -ra dexes <<< "$key"
+	echo -e "\033[0;32mPlaying songs: ${dexes[@]}\033[0;0m"
+	for index in ${dexes[@]}; do
+		foundf=/tmp/found.$$
+		echo 0 > $foundf
+		count=0
+		find ~/utmp -type f -name "*.mp3" -print0 | while IFS= read -r -d '' file; do
+		    if [ $count = $index ]; then
+					echo -e "\033[0;32mPlaying [$index]: $file\033[0;0m"
+					echo ffplay -i $file -showmode 1 -autoexit -volume 25 -loglevel fatal
+					ffplay -i $file -showmode 1 -autoexit -volume 25 -loglevel fatal
+					echo 1 > $foundf
+				fi
+				((count++))
+		done
+
+		found=$(cat $foundf)
+		[ $found -eq 0 ] && ( echo -e "\033[0;33mCannot play [$index]: File not found!\033[0;0m" )
+		rm $foundf
+	done
+
+else
+	echo -e "\033[0;31mInvalid mode $mode!\033[0;0m"
+	exit 1
+fi
