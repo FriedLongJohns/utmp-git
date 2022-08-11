@@ -52,7 +52,7 @@ if [ $mode = "list" ]; then
 	echo -e "\033[0;32mKeyword: $key\033[0;0m"
 	count=0
 	# find ~/utmp -type f -name "*$key*.mp3" -print0 | while IFS= read -r -d '' file; do
-	queue=$(ls {*.mp3,*.m4a} | tr " " "^")
+	queue=$(ls $DIR/{*.mp3,*.m4a} | tr " " "^")
 	for file in $queue; do
 			file=$(echo $file | tr "^" " ")
 	    echo -e "\033[0;32m$count\033[0;0m : $(echo $file | sed 's/.*\///g')"
@@ -117,7 +117,7 @@ elif [ $mode = "play" ]; then
 
 	if [ "$key" = "all" ]; then
 		echo -e "\033[0;33mPlaying ALL songs!\033[0;0m"
-		queue=$(ls {*.mp3,*.m4a} | tr " " "^" | sort -R)
+		queue=$(ls $DIR/{*.mp3,*.m4a} | tr " " "^" | sort -R)
 
 		for file in $queue; do
 			file=$(echo $file | tr "^" " ")
@@ -134,7 +134,7 @@ elif [ $mode = "play" ]; then
 		foundf=/tmp/found.$$
 		echo 0 > $foundf
 		count=0
-		queue=$(ls {*.mp3,*.m4a} | tr " " "^")
+		queue=$(ls $DIR/{*.mp3,*.m4a} | tr " " "^")
 
 		for file in $queue; do
 				file=$(echo $file | tr "^" " ")
