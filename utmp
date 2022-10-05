@@ -2,10 +2,12 @@
 mode=$1
 key=$2
 opt=$3
+what=$4
+
 
 if [ "X$mode" = "X" ]; then
 	cat << EOF
-utmp <mode> <key> [-p,-t]
+utmp <mode> <key> [-p,-t] [-s]
 	DESC:
 		utmp stands for Ultra Chad Music Player, and it tries it's best to be that.
 		utmp only can download and play songs, and essentially has the same functionality as a Discord music bot, save for the fact it runs on your computer and permanently stores it's files.
@@ -34,16 +36,20 @@ utmp <mode> <key> [-p,-t]
 
 	OPTIONS:
 		-p : Play downloaded video, if any. Only works with <mode> as 'find' or 'down'
+
 		-t : Play video like -p, and then prompt for deletion.
 				 Reccomended to use -t when using 'find' mode as Youtube may not always return what you wanted
+
+		-s : Use when downloading from a soundcloud link - ALWAYS put as last option!
 EOF
 	exit 1
 fi
 
 DIR=~/utmp
-TDIR=~/utmp/temp
+TEMPDIR=~/utmp/temp
+
 [ ! -d $DIR ] && ( echo "\033[0;32mno existing DIR, creating new directory!\033[0;0m" && mkdir $DIR )
-[ ! -d $TDIR ] && ( echo "\033[0;32mno existing TDIR, creating new directory!\033[0;0m" && mkdir $TDIR )
+[ ! -d $TEMPDIR ] && ( echo "\033[0;32mno existing TEMPDIR, creating new directory!\033[0;0m" && mkdir $TEMPDIR )
 
 echo ""
 
@@ -65,34 +71,55 @@ elif [ "$mode" = "find" ] || [ "$mode" = "down" ]; then
 	#^ there is key OR I exit now
 	if [ $mode = "find" ]; then
 		echo -e "\033[0;32mSearching for '$key'...\033[0;0m"
-		echo "yt-dlp "$key" -f 139 --default-search auto --max-downloads 1 --abort-on-error --quiet -o \"$TDIR/%(title)s.%(ext)s\""
-		yt-dlp "$key" -f 139 --default-search auto --max-downloads 1 --abort-on-error --quiet -o "$TDIR/%(title)s.%(ext)s"
+		if [ "$what" = "-s" ] || [ "$opt" = "-s" ]; then
+			echo -e "\033[0;32m[-s] removed \"-f 139\" from command\033[0;0m"
+			echo "yt-dlp "$key" --default-search auto --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/%(title)s.%(ext)s\""
+			yt-dlp "$key" --default-search auto --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/%(title)s.%(ext)s"
+		else
+			echo "yt-dlp "$key" -f 139 --default-search auto --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/%(title)s.%(ext)s\""
+			yt-dlp "$key" -f 139 --default-search auto --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/%(title)s.%(ext)s"
+		fi
 	else
 		echo -e "\033[0;32mDownloading from '$key'...\033[0;0m"
-		echo "yt-dlp "$key" -f 139 --max-downloads 1 --abort-on-error --quiet -o \"$TDIR/%(title)s.%(ext)s\""
-		yt-dlp "$key" -f 139 --max-downloads 1 --abort-on-error --quiet -o "$TDIR/%(title)s.%(ext)s"
+		if [ "$what" = "-s" ] || [ "$opt" = "-s" ]; then
+			echo -e "\033[0;32m[-s] removed \"-f 139\" from command\033[0;0m"
+			echo "yt-dlp "$key" --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/%(title)s.%(ext)s\""
+			yt-dlp "$key" --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/%(title)s.%(ext)s"
+		else
+			echo "yt-dlp "$key" -f 139 --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/%(title)s.%(ext)s\""
+			yt-dlp "$key" -f 139 --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/%(title)s.%(ext)s"
+		fi
 		#still force 1 download because we only move the 1 last download, not all downloaded
 	fi
 
-	name=$(ls $TDIR -t | tail -1)
-	[ "$TDIR" = "$name"  ] && [ echo -e "\033[0;31mCould not find downloaded file!\033[0;0m" && exit 1 ]
+	name=$(ls $TEMPDIR -t | tail -1)
+	[ "$TEMPDIR" = "$name"  ] && [ echo -e "\033[0;31mCould not find downloaded file!\033[0;0m" && exit 1 ]
 	echo -e "\033[0;32mDownloaded result as: $name\033[0;0m"
 
-	echo -e "\033[0;32mConverting result to mp3...\033[0;0m"
-	fname=$(echo $name | sed -e 's,.m4a,.mp3,g')
-	echo "ffmpeg -i \"$TDIR/$name\" \"$TDIR/$fname\" -loglevel fatal -y"
-	ffmpeg -i "$TDIR/$name" "$TDIR/$fname" -loglevel fatal -y
-	#-y to automatically overwrite files without prompting
-	echo -e "\033[0;32mConverted to: $fname\033[0;0m"
+	if [ "$what" = "-s" ] || [ "$opt" = "-s" ]; then
+		echo -e "\033[0;33m[-s] Result is already mp3, not converting!\033[0;0m"
+		fname=$name
+	else
+		echo -e "\033[0;32mConverting result to mp3...\033[0;0m"
+		fname=$(echo $name | sed -e 's,.m4a,.mp3,g')
+		echo "ffmpeg -i \"$TEMPDIR/$name\" \"$TEMPDIR/$fname\" -loglevel fatal -y"
+		ffmpeg -i "$TEMPDIR/$name" "$TEMPDIR/$fname" -loglevel fatal -y
+		#-y to automatically overwrite files without prompting
+		echo -e "\033[0;32mConverted to: $fname\033[0;0m"
+	fi
 
-	echo "rm \"$TDIR/$name\""
-	rm "$TDIR/$name"
-	echo -e "\033[0;32mRemoved old file\033[0;0m"
+	if [ "$what" = "-s" ] || [ "$opt" = "-s" ]; then
+		echo -e "\033[0;32m[-e] Did not remove nonexistent old file\033[0;0m"
+	else
+		echo "rm \"$TEMPDIR/$name\""
+		rm "$TEMPDIR/$name"
+		echo -e "\033[0;32mRemoved old file\033[0;0m"
+	fi
 
 	echo -e "\033[0;32mDone downloading!\033[0;0m"
 
-	echo "mv \"$TDIR/$fname\" \"$DIR/$fname\""
-	mv "$TDIR/$fname" "$DIR/$fname"
+	echo "mv \"$TEMPDIR/$fname\" \"$DIR/$fname\""
+	mv "$TEMPDIR/$fname" "$DIR/$fname"
 
 	[ "$opt" = "-p" ] && ( echo -e "\033[0;32m[-p] Playing '$fname'\033[0;0m" && ffplay -i $DIR/$fname -showmode 1 -autoexit -volume 25 -loglevel fatal )
 
