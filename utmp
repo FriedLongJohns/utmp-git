@@ -9,8 +9,9 @@ if [ "X$mode" = "X" ]; then
 	cat << EOF
 utmp <mode> <key> [-p,-t] [-s]
 	DESC:
-		utmp stands for Ultra Chad Music Player, and it tries it's best to be that.
-		utmp only can download and play songs, and essentially has the same functionality as a Discord music bot, save for the fact it runs on your computer and permanently stores it's files.
+		Utmp stands for Ultra Chad Music Player, and it tries it's best to be that.
+		Utmp only can do a couple things: play music, download or (crappily) find music, and tell you what it's downloaded so far.
+		It essentially has the same functionality as a Discord music bot, save for the fact it runs on your computer and (typically) permanently stores it's files.
 
 	TEXT COLORS:
 		green text is standard text, colored green to seperate from the terminal's white
@@ -37,10 +38,11 @@ utmp <mode> <key> [-p,-t] [-s]
 	OPTIONS:
 		-p : Play downloaded video, if any. Only works with <mode> as 'find' or 'down'
 
-		-t : Play video like -p, and then prompt for deletion.
-				 Reccomended to use -t when using 'find' mode as Youtube may not always return what you wanted
+		-t : Play video like -p, and then prompt for deletion
+				 Recommended to use -t when using 'find' mode as Youtube may not always return what you wanted
 
-		-s : Use when downloading from a soundcloud link - ALWAYS put as last option!
+		-s : Use when downloading from a soundcloud link
+				 Always put at the end of argument list!
 EOF
 	exit 1
 fi
@@ -56,14 +58,18 @@ echo ""
 if [ $mode = "list" ]; then
 	echo -e "\033[0;32mCurrent Stored Library:\033[0;0m"
 	echo -e "\033[0;32mKeyword: $key\033[0;0m"
+	echo -e "\033[0;32m----------------------\033[0;0m"
+
 	count=0
-	# find ~/utmp -type f -name "*$key*.mp3" -print0 | while IFS= read -r -d '' file; do
 	queue=$(ls $DIR/{*.mp3,*.m4a} | tr " " "^")
+
 	for file in $queue; do
 			file=$(echo $file | tr "^" " ")
-	    echo -e "\033[0;32m$count\033[0;0m : $(echo $file | sed 's/.*\///g')"
+	    tex="\033[0;32m$count\033[0;0m : $(echo $file | sed 's/.*\///g')"
+			echo -e $tex | grep ".*$key.*"
 			((count++))
 	done
+
 	echo -e "\033[0;32m----------------------\033[0;0m"
 
 elif [ "$mode" = "find" ] || [ "$mode" = "down" ]; then
@@ -109,7 +115,7 @@ elif [ "$mode" = "find" ] || [ "$mode" = "down" ]; then
 	fi
 
 	if [ "$what" = "-s" ] || [ "$opt" = "-s" ]; then
-		echo -e "\033[0;32m[-e] Did not remove nonexistent old file\033[0;0m"
+		echo -e "\033[0;32m[-s] Did not remove nonexistent old file\033[0;0m"
 	else
 		echo "rm \"$TEMPDIR/$name\""
 		rm "$TEMPDIR/$name"
