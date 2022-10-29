@@ -105,8 +105,8 @@ elif [ "$mode" = "find" ] || [ "$mode" = "down" ]; then
 		#still force 1 download because we only move the 1 last download, not all downloaded
 	fi
 
-	name=$(ls $TEMPDIR -t | tail -1)
-	[ "$TEMPDIR" = "$name"  ] && [ echo -e "\033[0;31mCould not find downloaded file!\033[0;0m" && exit 1 ]
+	name=$(ls -t $TEMPDIR | tail -1)
+	[ "$name" = "" ] && echo -e "\033[0;31mCould not find downloaded file!\033[0;0m" && echo -e "\033[0;32mDid you forget to use -s while dowloading or not have wifi?\033[0;0m" && exit 1
 	echo -e "\033[0;32mDownloaded result as: $name\033[0;0m"
 
 	if [ "$what" = "-s" ] || [ "$opt" = "-s" ]; then
