@@ -4,6 +4,7 @@ key=$2
 opt=$3
 what=$4
 
+trap 'echo -e "\033[0;31m Utmp stopped :::during::: unknown state\033[0;0m"; exit 1' SIGINT
 
 if [ "X$mode" = "X" ]; then
 	cat << EOF
@@ -77,6 +78,9 @@ elif [ "$mode" = "find" ] || [ "$mode" = "down" ]; then
 	#^ there is key OR I exit now
 	if [ $mode = "find" ]; then
 		echo -e "\033[0;32mSearching for '$key'...\033[0;0m"
+
+		trap 'echo -e "\033[0;31m Utmp stopped :::during::: find\033[0;0m"; exit 1' SIGINT
+
 		if [ "$what" = "-s" ] || [ "$opt" = "-s" ]; then
 			echo -e "\033[0;32m[-s] removed \"-f 139\" from command\033[0;0m"
 			echo "yt-dlp "$key" --default-search auto --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/%(title)s.%(ext)s\""
@@ -87,6 +91,9 @@ elif [ "$mode" = "find" ] || [ "$mode" = "down" ]; then
 		fi
 	else
 		echo -e "\033[0;32mDownloading from '$key'...\033[0;0m"
+
+		trap 'echo -e "\033[0;31m Utmp stopped :::during::: down\033[0;0m"; exit 1' SIGINT
+
 		if [ "$what" = "-s" ] || [ "$opt" = "-s" ]; then
 			echo -e "\033[0;32m[-s] removed \"-f 139\" from command\033[0;0m"
 			echo "yt-dlp "$key" --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/%(title)s.%(ext)s\""
@@ -109,6 +116,9 @@ elif [ "$mode" = "find" ] || [ "$mode" = "down" ]; then
 		echo -e "\033[0;32mConverting result to mp3...\033[0;0m"
 		fname=$(echo $name | sed -e 's,.m4a,.mp3,g')
 		echo "ffmpeg -i \"$TEMPDIR/$name\" \"$TEMPDIR/$fname\" -loglevel fatal -y"
+
+		trap 'echo -e "\033[0;31m Utmp stopped :::during::: file conversion\033[0;0m"; echo -e "\033[0;33mClearing TEMPDIR ($TEMPDIR)...\033[0;0m"; rm $TEMPDIR/*; exit 1' SIGINT
+
 		ffmpeg -i "$TEMPDIR/$name" "$TEMPDIR/$fname" -loglevel fatal -y
 		#-y to automatically overwrite files without prompting
 		echo -e "\033[0;32mConverted to: $fname\033[0;0m"
@@ -132,6 +142,9 @@ elif [ "$mode" = "find" ] || [ "$mode" = "down" ]; then
 	if [ "$opt" = "-t" ]; then
 		echo -e "\033[0;32m[-t] Playing '$fname'\033[0;0m"
 		echo "ffplay -i \"$DIR/$fname\" -showmode 1 -autoexit -volume 25 -loglevel fatal"
+
+		trap 'echo -e "\033[0;31m Utmp stopped :::during::: file playback\033[0;0m"; exit 1' SIGINT
+
 		ffplay -i "$DIR/$fname" -showmode 1 -autoexit -volume 25 -loglevel fatal
 
 		read -r -p "Delete file? [N/y]: " inp
@@ -147,6 +160,8 @@ elif [ "$mode" = "find" ] || [ "$mode" = "down" ]; then
 
 elif [ $mode = "play" ]; then
 	[ -z "$key" ] && echo -e "\033[0;31mNeed <key> to play songs!\033[0;0m" && exit 1
+
+	trap 'echo -e "\033[0;31m Utmp stopped :::during::: file playback\033[0;0m"; exit 1' SIGINT
 
 	if [ "$key" = "all" ]; then
 		echo -e "\033[0;33mPlaying ALL songs!\033[0;0m"
