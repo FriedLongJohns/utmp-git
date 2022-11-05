@@ -233,6 +233,53 @@ elif [ $mode = "expo" ]; then
 	done
 	echo $out
 
+elif [ $mode = "remv" ]; then
+	trap 'echo -e "\033[0;31m Utmp stopped :::during::: media deletion\033[0;0m"; exit 1' SIGINT
+
+	if [ "$key" = "all" ] || [ -z "$key" ]; then
+		echo -e "\033[0;33mAre you sure you want to delete ALL songs?\033[0;0m"
+		read -r -p "Proceed? [n/Y]: " inp
+		if [ "$inp" = "Y" ]; then
+			echo -e "\033[0;31mDeleting everything...\033[0;0m"
+			rm -R $DIR/*
+			echo "rm -R $DIR/*"
+			echo -e "\033[0;32mFinised deletion.\033[0;0m"
+		else
+			echo -e "\033[0;32mWill not delete.\033[0;0m"
+			trap - SIGINT
+			exit 1
+		fi
+	fi
+
+	IFS=',' read -ra dexes <<< "$key"
+	echo -e "\033[0;32mDeleting songs: ${dexes[@]}\033[0;0m"
+	min=0
+	for index in ${dexes[@]}; do
+		foundf=/tmp/found.$$
+		echo 0 > $foundf
+		count=0
+		queue=$(ls $DIR/{*.mp3,*.m4a} | tr " " "^")
+
+		for file in $queue; do
+				file="$(echo $file | sed 's#\^# #g')"
+				temp=$(($index-$min))
+
+		    if [ $count = $temp ]; then
+					echo -e "\033[0;33mDeleting [$index]: $file\033[0;0m"
+					rm -i "$file"
+
+					echo 1 > $foundf
+					((min++))
+				fi
+				((count++))
+		done
+
+		found=$(cat $foundf)
+		[ $found -eq 0 ] && ( echo -e "\033[0;33mCannot delete [$index]: File not found!\033[0;0m" )
+		rm $foundf
+	done
+	echo -e "\033[0;32mFinished deletion.\033[0;0m"
+
 else
 	echo -e "\033[0;31mInvalid mode $mode!\033[0;0m"
 	trap - SIGINT
