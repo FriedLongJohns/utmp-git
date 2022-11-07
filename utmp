@@ -112,14 +112,14 @@ elif [ "$mode" = "find" ] || [ "$mode" = "down" ]; then
 	fi
 
 	if [ "$opt" = "-t" ] || [ "$opt" = "-p" ]; then
-		read -r -p "Delete file? [N/y]: " inp
-		if [ "$inp" = "N" ]; then
-			echo -e "\033[0;32mWill not delete file\033[0;0m"
-		else
+		read -r -p "Delete file? [n/Y]: " inp
+		if [ "$inp" = "Y" ]; then
 			echo -e "\033[0;33mDeleting $fname!\033[0;0m"
 			echo "rm \"$DIR/$fname\""
 			rm "$DIR/$fname"
 			echo -e "\033[0;32mDone\033[0;0m"
+		else
+			echo -e "\033[0;32mWill not delete file\033[0;0m"
 		fi
 	fi
 
