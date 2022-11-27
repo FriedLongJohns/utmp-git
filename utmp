@@ -193,10 +193,12 @@ elif [ $mode = "expo" ]; then
 			((count++))
 		done
 		echo $out
+		trap - SIGINT
+		exit 1
 	fi
 
 	IFS=',' read -ra dexes <<< "$key"
-	echo -e "\033[0;32mPlaying songs: ${dexes[@]}\033[0;0m"
+	echo -e "\033[0;32mExporting songs: ${dexes[@]}\033[0;0m"
 	for index in ${dexes[@]}; do
 		foundf=/tmp/found.$$
 		echo 0 > $foundf
@@ -286,3 +288,6 @@ else
 	echo $out
 	exit 1
 fi
+
+trap - SIGINT
+exit 1
