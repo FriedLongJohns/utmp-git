@@ -1,5 +1,5 @@
 #!/bin/bash
-echo -e "utmp <mode> <key> [-p,-t] [-s]"
+echo -e "utmp <mode> <key> [-p,-t]"
 echo -e "	DESC:"
 echo -e "		Utmp stands for Ultra Chad Music Player, and it tries it's best to be that."
 echo -e "		Utmp only can do a couple things, but as being completely written in a language meant for little-to-no complexity, it's fairly decent."
@@ -38,6 +38,3 @@ echo -e "		-p : Prompt file for deletion after download, if any. Only works with
 echo -e ""
 echo -e "		-t : Play video, and then prompt for deletion"
 echo -e "				 Recommended to use -t when using 'find' mode as Youtube may not always return what you wanted"
-echo -e ""
-echo -e "		-s : Use when downloading from a soundcloud link"
-echo -e "				 Always put at the end of argument list!"

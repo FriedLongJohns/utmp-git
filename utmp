@@ -14,6 +14,7 @@ fi
 
 DIR=~/utmp
 TEMPDIR=~/utmp/temp
+VOLUME=10
 
 [ ! -d $DIR ] && ( echo "\033[0;32mno existing DIR, creating new directory!\033[0;0m" && mkdir $DIR )
 [ ! -d $TEMPDIR ] && ( echo "\033[0;32mno existing TEMPDIR, creating new directory!\033[0;0m" && mkdir $TEMPDIR )
@@ -26,7 +27,7 @@ if [ $mode = "list" ]; then
 	echo -e "\033[0;32m----------------------\033[0;0m"
 
 	count=0
-	queue=$(ls $DIR/{*.mp3,*.m4a} | tr " " "^")
+	queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} | tr " " "^")
 
 	for file in $queue; do
 			file=$(echo $file | tr "^" " ")
@@ -37,6 +38,7 @@ if [ $mode = "list" ]; then
 
 	echo -e "\033[0;32m----------------------\033[0;0m"
 
+
 elif [ "$mode" = "find" ] || [ "$mode" = "down" ]; then
 	[ -z "$key" ] && echo -e "\033[0;31mNeed <key> to download/find from Youtube!\033[0;0m" && exit 1
 	#^ there is key OR I exit now
@@ -46,82 +48,50 @@ elif [ "$mode" = "find" ] || [ "$mode" = "down" ]; then
 
 		trap 'echo -e "\033[0;31m Utmp stopped :::during::: find\033[0;0m"; exit 1' SIGINT
 
-		if [ "$what" = "-s" ] || [ "$opt" = "-s" ]; then
-			echo -e "\033[0;32m[-s] removed \"-f 139\" from command\033[0;0m"
-			echo "yt-dlp "$key" --default-search auto --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s\""
-			yt-dlp "$key" --default-search auto --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s"
-		else
-			echo "yt-dlp "$key" -f 139 --default-search auto --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s\""
-			yt-dlp "$key" -f 139 --default-search auto --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s"
-		fi
+		echo "yt-dlp "$key" -f ba --default-search auto --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s\""
+		yt-dlp "$key" -f ba --default-search auto --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s"
 	else
 		echo -e "\033[0;32mDownloading from '$key'...\033[0;0m"
 
 		trap 'echo -e "\033[0;31m Utmp stopped :::during::: down\033[0;0m"; exit 1' SIGINT
 
-		if [ "$what" = "-s" ] || [ "$opt" = "-s" ]; then
-			echo -e "\033[0;32m[-s] removed \"-f 139\" from command\033[0;0m"
-			echo "yt-dlp "$key" --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s\""
-			yt-dlp "$key" --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s"
-		else
-			echo "yt-dlp "$key" -f 139 --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s\""
-			yt-dlp "$key" -f 139 --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s"
-		fi
+		echo "yt-dlp "$key" -f ba --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s\""
+		yt-dlp "$key" -f ba --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s"
 		#still force 1 download because we only move the 1 last download, not all downloaded
 	fi
 
 	name=$(ls -t $TEMPDIR | tail -1)
-	[ "$name" = "" ] && echo -e "\033[0;31mCould not find downloaded file!\033[0;0m" && echo -e "\033[0;32mDid you forget to use -s while dowloading or not have wifi?\033[0;0m" && trap - SIGINT && exit 1
+	[ "$name" = "" ] && echo -e "\033[0;31mCould not find downloaded file!\033[0;0m" && echo -e "\033[0;32mDid you forget to use -s while dowloading or not have wifi?\033[0;0m" && trap - SIGINT && exit 0
 	echo -e "\033[0;32mDownloaded result as: $name\033[0;0m"
 
-	if [ "$what" = "-s" ] || [ "$opt" = "-s" ]; then
-		echo -e "\033[0;33m[-s] Result is already mp3, not converting!\033[0;0m"
-		fname=$name
-	else
-		echo -e "\033[0;32mConverting result to mp3...\033[0;0m"
-		fname=$(echo $name | sed -e 's,.m4a,.mp3,g')
-		echo "ffmpeg -i \"$TEMPDIR/$name\" \"$TEMPDIR/$fname\" -loglevel fatal -y"
-
-		trap 'echo -e "\033[0;31m Utmp stopped :::during::: file conversion\033[0;0m"; echo -e "\033[0;33mClearing TEMPDIR ($TEMPDIR)...\033[0;0m"; rm $TEMPDIR/*; exit 1' SIGINT
-
-		ffmpeg -i "$TEMPDIR/$name" "$TEMPDIR/$fname" -loglevel fatal -y
-		#-y to automatically overwrite files without prompting
-		echo -e "\033[0;32mConverted to: $fname\033[0;0m"
-	fi
-
-	if [ "$what" = "-s" ] || [ "$opt" = "-s" ]; then
-		echo -e "\033[0;32m[-s] Did not remove nonexistent old file\033[0;0m"
-	else
-		echo "rm \"$TEMPDIR/$name\""
-		rm "$TEMPDIR/$name"
-		echo -e "\033[0;32mRemoved old file\033[0;0m"
-	fi
-
-	echo -e "\033[0;32mDone downloading!\033[0;0m"
-
-	echo "mv \"$TEMPDIR/$fname\" \"$DIR/$fname\""
-	mv "$TEMPDIR/$fname" "$DIR/$fname"
+	echo "mv \"$TEMPDIR/$name\" \"$DIR/$name\""
+	mv "$TEMPDIR/$name" "$DIR/$name"
 
 	if [ "$opt" = "-t" ]; then
-		echo -e "\033[0;32m[-t] Playing '$fname'\033[0;0m"
-		echo "ffplay -i \"$DIR/$fname\" -showmode 1 -autoexit -volume 25 -loglevel fatal"
+		echo -e "\033[0;32m[-t] Playing '$name'\033[0;0m"
+		echo "ffplay -i \"$DIR/$name\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
 
 		trap 'echo -e "\033[0;31m Utmp stopped :::during::: file playback\033[0;0m"; exit 1' SIGINT
 
-		ffplay -i "$DIR/$fname" -showmode 1 -autoexit -volume 25 -loglevel fatal
+		ffplay -i "$DIR/$name" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
 	fi
 
 	if [ "$opt" = "-t" ] || [ "$opt" = "-p" ]; then
 		read -r -p "Delete file? [n/Y]: " inp
 		if [ "$inp" = "Y" ]; then
-			echo -e "\033[0;33mDeleting $fname!\033[0;0m"
-			echo "rm \"$DIR/$fname\""
-			rm "$DIR/$fname"
+			echo -e "\033[0;33mDeleting $name!\033[0;0m"
+			echo "rm \"$DIR/$name\""
+			rm "$DIR/$name"
 			echo -e "\033[0;32mDone\033[0;0m"
 		else
 			echo -e "\033[0;32mWill not delete file\033[0;0m"
 		fi
 	fi
+
+	echo -e "\033[0;31mFinished!\033[0;0m"
+	trap - SIGINT
+	exit 0
+
 
 elif [ $mode = "play" ]; then
 	[ -z "$key" ] && echo -e "\033[0;31mNeed <key> to play songs!\033[0;0m" && trap - SIGINT && exit 1
@@ -130,13 +100,13 @@ elif [ $mode = "play" ]; then
 
 	if [ "$key" = "all" ]; then
 		echo -e "\033[0;33mPlaying ALL songs!\033[0;0m"
-		queue=$(ls $DIR/{*.mp3,*.m4a} | tr " " "^" | sort -R)
+		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} | tr " " "^" | sort -R)
 
 		for file in $queue; do
 			file=$(echo $file | tr "^" " ")
 			echo -e "\033[0;32mPlaying $file...\033[0;0m"
-			echo "ffplay -i \"$file\" -showmode 1 -autoexit -volume 25 -loglevel fatal"
-			ffplay -i "$file" -showmode 1 -autoexit -volume 25 -loglevel fatal
+			echo "ffplay -i \"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
+			ffplay -i "$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
 			((count++))
 		done
 	fi
@@ -147,14 +117,14 @@ elif [ $mode = "play" ]; then
 		foundf=/tmp/found.$$
 		echo 0 > $foundf
 		count=0
-		queue=$(ls $DIR/{*.mp3,*.m4a} | tr " " "^")
+		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} | tr " " "^")
 
 		for file in $queue; do
 				file=$(echo $file | tr "^" " ")
 		    if [ $count = $index ]; then
 					echo -e "\033[0;32mPlaying [$index]: $file\033[0;0m"
-					echo "ffplay -i \"$file\" -showmode 1 -autoexit -volume 25 -loglevel fatal"
-					ffplay -i "$file" -showmode 1 -autoexit -volume 25 -loglevel fatal
+					echo "ffplay -i \"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
+					ffplay -i "$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
 					echo 1 > $foundf
 				fi
 				((count++))
@@ -165,13 +135,14 @@ elif [ $mode = "play" ]; then
 		rm $foundf
 	done
 
+
 elif [ $mode = "expo" ]; then
 	trap 'echo -e "\033[0;31m Utmp stopped :::during::: library export\033[0;0m"; exit 1' SIGINT
 	out="echo \"::UTMP LIBRARY IMPORT::\""
 
 	if [ "$key" = "all" ] || [ -z "$key" ]; then
 		echo -e "\033[0;33mExporting ALL songs!\033[0;0m"
-		queue=$(ls $DIR/{*.mp3,*.m4a} | tr " " "^" | sort -R)
+		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} | tr " " "^" | sort -R)
 
 		for file in $queue; do
 			file=$(echo $file | tr "^" " ")
@@ -186,7 +157,7 @@ elif [ $mode = "expo" ]; then
 				echo -e "\033[0;33m$file has no formatted url, skipping!\033[0;0m"
 			else
 				echo -e "\033[0;32mExport: $file \033[0;0m->\033[0;32m $url\033[0;0m"
-				out="$out && utmp down \"$url\" -p"
+				out="$out && utmp down \"$url\""
 				# echo $out
 			fi
 
@@ -203,7 +174,7 @@ elif [ $mode = "expo" ]; then
 		foundf=/tmp/found.$$
 		echo 0 > $foundf
 		count=0
-		queue=$(ls $DIR/{*.mp3,*.m4a} | tr " " "^")
+		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} | tr " " "^")
 
 		for file in $queue; do
 				file=$(echo $file | tr "^" " ")
@@ -220,7 +191,7 @@ elif [ $mode = "expo" ]; then
 						echo -e "\033[0;33m$file has no formatted url, skipping!\033[0;0m"
 					else
 						echo -e "\033[0;32mExport: $file \033[0;0m->\033[0;32m $url\033[0;0m"
-						out="$out && utmp down \"$url\" -p"
+						out="$out && utmp down \"$url\""
 						# echo $out
 					fi
 
@@ -234,6 +205,7 @@ elif [ $mode = "expo" ]; then
 		rm $foundf
 	done
 	echo $out
+
 
 elif [ $mode = "remv" ]; then
 	trap 'echo -e "\033[0;31m Utmp stopped :::during::: media deletion\033[0;0m"; exit 1' SIGINT
@@ -260,7 +232,7 @@ elif [ $mode = "remv" ]; then
 		foundf=/tmp/found.$$
 		echo 0 > $foundf
 		count=0
-		queue=$(ls $DIR/{*.mp3,*.m4a} | tr " " "^")
+		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} | tr " " "^")
 
 		for file in $queue; do
 				file="$(echo $file | sed 's#\^# #g')"
@@ -281,6 +253,45 @@ elif [ $mode = "remv" ]; then
 		rm $foundf
 	done
 	echo -e "\033[0;32mFinished deletion.\033[0;0m"
+
+
+elif [ $mode = "clen" ]; then
+	trap 'echo -e "\033[0;31m Utmp stopped :::during::: file cleaning\033[0;0m"; exit 1' SIGINT
+
+	queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3})
+	queue=$(echo $queue | sed "s# /#∆#g" | sed "s# #π#g" | sed "s#∆# #g")
+	foundf=0
+
+	for fil in $queue; do
+		pfil="${fil//π/ }"#I am going to go insane
+		nfil="${pfil%.*}"
+		nfilxt="${pfil##*.}"
+		# echo -e "\033[0;32mChecking: $pfil\033[0;0m"
+
+		for file in $queue; do
+			pfile="${file//π/ }"
+			nfile="${pfile%.*}"
+			nfilext="${pfile##*.}"
+
+	    if [ "$nfil" = "$nfile" ] && [ "$nfilxt" != "$nfilext" ]; then
+				echo -e "\033[0;33mFound duplicate: $pfile\033[0;0m"
+				if [ "$nfilxt" = "webm" ]; then
+					rm /"$pfile"
+				elif [ "$nfilext" = "webm" ]; then
+					rm /"$pfil"
+				elif [ "$nfilxt" = "wav" ]; then
+					rm /"$pfile"
+				else
+					rm /"$pfil"
+				fi
+				foundf=1
+				queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3})
+				queue=$(echo $queue | sed "s# /#∆#g" | sed "s# #π#g" | sed "s#∆# #g")
+			fi
+		done
+	done
+
+	[ $foundf -eq 0 ] && ( echo -e "\033[0;32mFound no duplicates!\033[0;0m" )
 
 else
 	echo -e "\033[0;31mInvalid mode $mode!\033[0;0m"
