@@ -67,20 +67,20 @@ Space-sensitive!
 &nbsp;&nbsp;&nbsp;&nbsp;We can list our OST files, but even better would be to PLAY them too. This does that, since OST is recognized as not being a song index.
 
 &nbsp;&nbsp;&nbsp;&nbsp;Possible output:  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Playing songs: OST
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Cannot play [OST]: Index not found!
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Using OST as a search keyword...
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Playing [OST]: /Users/bob/utmp/Arknights OST - Title.mp3
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ffplay -i "/Users/bob/utmp/Arknights OST - Title.mp3" -showmode 1 -autoexit -volume 10 -loglevel fatal
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Playing songs: OST`
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Cannot play [OST]: Index not found!`
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Using OST as a search keyword...`
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Playing [OST]: /Users/bob/utmp/Arknights OST - Title.mp3`
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`ffplay -i "/Users/bob/utmp/Arknights OST - Title.mp3" -showmode 1 -autoexit -volume 10 -loglevel fatal`
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Playing [OST]: /Users/bob/utmp/Brigador Killers OST - Smile For The Camera (Makeup and Vanity Set) [z3WmEYtpFQY].mp3
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ffplay -i "/Users/bob/utmp/Brigador Killers OST - Smile For The Camera (Makeup and Vanity Set) [z3WmEYtpFQY].mp3" -showmode 1 -autoexit -volume 10 -loglevel fatal
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Playing [OST]: /Users/bob/utmp/Brigador Killers OST - Smile For The Camera (Makeup and Vanity Set) [z3WmEYtpFQY].mp3`
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`ffplay -i "/Users/bob/utmp/Brigador Killers OST - Smile For The Camera (Makeup and Vanity Set) [z3WmEYtpFQY].mp3" -showmode 1 -autoexit -volume 10 -loglevel fatal`
 
-Playing [OST]: /Users/bob/utmp/Brigador OST - 1-12 - Continue [ YhT4Xj-qQs].mp3
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ffplay -i "/Users/bob/utmp/Brigador OST - 1-12 - Continue [ YhT4Xj-qQs].mp3" -showmode 1 -autoexit -volume 10 -loglevel fatal
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Playing [OST]: /Users/bob/utmp/Brigador OST - 1-12 - Continue [ YhT4Xj-qQs].mp3`
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`ffplay -i "/Users/bob/utmp/Brigador OST - 1-12 - Continue [ YhT4Xj-qQs].mp3" -showmode 1 -autoexit -volume 10 -loglevel fatal`
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Playing [OST]: /Users/bob/utmp/Hacknet OST - Sabotage.mp3
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ffplay -i "/Users/bob/utmp/Hacknet OST - Sabotage.mp3" -showmode 1 -autoexit -volume 10 -loglevel fatal
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Playing [OST]: /Users/bob/utmp/Hacknet OST - Sabotage.mp3`
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`ffplay -i "/Users/bob/utmp/Hacknet OST - Sabotage.mp3" -showmode 1 -autoexit -volume 10 -loglevel fatal`
 
 `utmp find "Never Gonna Give You Up" -p`  
 &nbsp;&nbsp;&nbsp;&nbsp;This is using 'find' mode, so utmp is now searching youtube for the well-known rickroll song.  
