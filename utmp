@@ -100,7 +100,13 @@ elif [ $mode = "play" ]; then
 
 	if [ "$key" = "all" ]; then
 		echo -e "\033[0;33mPlaying ALL songs!\033[0;0m"
-		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} | tr " " "^" | sort -R)
+		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} 2>/dev/null | tr " " "^" | sort -R)
+
+		if [ "X$queue" == "X" ]; then
+			echo -e "\033[0;31mThere are no songs!\033[0;0m"
+			trap - SIGINT
+			exit 0
+		fi
 
 		for file in $queue; do
 			file=$(echo $file | tr "^" " ")
@@ -109,15 +115,24 @@ elif [ $mode = "play" ]; then
 			ffplay -i "$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
 			((count++))
 		done
+
+		echo -e "\033[0;32mFinished!\033[0;0m"
+		trap - SIGINT
+		exit 0
 	fi
 
 	IFS=',' read -ra dexes <<< "$key"
 	echo -e "\033[0;32mPlaying songs: ${dexes[@]}\033[0;0m"
 	for index in ${dexes[@]}; do
-		foundf=/tmp/found.$$
-		echo 0 > $foundf
 		count=0
-		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} | tr " " "^")
+		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} 2>/dev/null | tr " " "^")
+		plaid=0
+
+		if [ "X$queue" == "X" ]; then
+			echo -e "\033[0;31mThere are no songs!\033[0;0m"
+			trap - SIGINT
+			exit 0
+		fi
 
 		for file in $queue; do
 				file=$(echo $file | tr "^" " ")
@@ -125,14 +140,25 @@ elif [ $mode = "play" ]; then
 					echo -e "\033[0;32mPlaying [$index]: $file\033[0;0m"
 					echo "ffplay -i \"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
 					ffplay -i "$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
-					echo 1 > $foundf
+					plaid=1
+					continue
 				fi
 				((count++))
 		done
 
-		found=$(cat $foundf)
-		[ $found -eq 0 ] && ( echo -e "\033[0;33mCannot play [$index]: File not found!\033[0;0m" )
-		rm $foundf
+		[ $plaid -eq 0 ] && ( echo -e "\033[0;33mCannot play [$index]: Index not found!\033[0;0m" ) && ( echo -e "\033[0;32mUsing "$index" as a search keyword...\033[0;0m" )
+
+		for rawfile in $queue; do
+				file=$(echo $rawfile | tr "^" " ")
+				if [[ "$file" == *"$index"* ]]; then
+					echo -e "\033[0;32mPlaying [$index]: $file\033[0;0m"
+					echo "ffplay -i \"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
+					ffplay -i "$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
+					plaid=1
+		    fi
+		done
+
+		[ $plaid -eq 0 ] && ( echo -e "\033[0;31mCannot play or find: $index!\033[0;0m" )
 	done
 
 
@@ -142,7 +168,13 @@ elif [ $mode = "expo" ]; then
 
 	if [ "$key" = "all" ] || [ -z "$key" ]; then
 		echo -e "\033[0;33mExporting ALL songs!\033[0;0m"
-		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} | tr " " "^" | sort -R)
+		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} 2>/dev/null | tr " " "^")
+
+		if [ "X$queue" == "X" ]; then
+			echo -e "\033[0;31mThere are no songs!\033[0;0m"
+			trap - SIGINT
+			exit 0
+		fi
 
 		for file in $queue; do
 			file=$(echo $file | tr "^" " ")
@@ -174,7 +206,13 @@ elif [ $mode = "expo" ]; then
 		foundf=/tmp/found.$$
 		echo 0 > $foundf
 		count=0
-		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} | tr " " "^")
+		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} 2>/dev/null | tr " " "^")
+
+		if [ "X$queue" == "X" ]; then
+			echo -e "\033[0;31mThere are no songs!\033[0;0m"
+			trap - SIGINT
+			exit 0
+		fi
 
 		for file in $queue; do
 				file=$(echo $file | tr "^" " ")
@@ -232,7 +270,13 @@ elif [ $mode = "remv" ]; then
 		foundf=/tmp/found.$$
 		echo 0 > $foundf
 		count=0
-		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} | tr " " "^")
+		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} 2>/dev/null | tr " " "^")
+
+		if [ "X$queue" == "X" ]; then
+			echo -e "\033[0;31mThere are no songs!\033[0;0m"
+			trap - SIGINT
+			exit 0
+		fi
 
 		for file in $queue; do
 				file="$(echo $file | sed 's#\^# #g')"
