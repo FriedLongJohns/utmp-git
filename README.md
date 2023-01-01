@@ -1,14 +1,14 @@
-## utmp-git
-yt-dlp and ffmpeg-based terminal music player/downloader
+## utmp-git  
+yt-dlp and ffmpeg-based terminal music player/downloader  
 
-I stole yt-dlp and made a music player, because running yt-dlp and ffmpeg every time you want to listen to a song is not fun.
-There's no ads since you're literally stealing the video file.
-And since we download in .webm/.wav (audio) instead of .mp4, you download videos very quickly.
-Ten billion errors but it's probably fine.
-Utmp stands for Ultra Chad Music Player, and it tries it's best to be that.
-Utmp only can do a couple things, but as being completely written in a language meant for little-to-no complexity, it's fairly decent.
-It essentially has the same functionality as a Discord music bot, save for the fact it runs on your computer and (typically) permanently stores it's files.
-Space-sensitive!
+I stole yt-dlp and made a music player, because running yt-dlp and ffmpeg every time you want to listen to a song is not fun.  
+There's no ads since you're literally stealing the video file.  
+And since we download in .webm/.wav (audio) instead of .mp4, you download videos very quickly.  
+Ten billion errors but it's probably fine.  
+Utmp stands for Ultra Chad Music Player, and it tries it's best to be that.  
+Utmp only can do a couple things, but as being completely written in a language meant for little-to-no complexity, it's fairly decent.  
+It essentially has the same functionality as a Discord music bot, save for the fact it runs on your computer and (typically) permanently stores it's files.  
+Space-sensitive!  
 
 # What can do?  
 `utmp <mode> <key> [-p,-t]`  
@@ -23,11 +23,11 @@ Space-sensitive!
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;list : show all songs in library (inside ~/utmp/ folder)  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;find : use key as search query on youtube to find videos  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;down : use key as a link to directly download videos  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;play : play videos from library using their indexes.  If an index is not found (or maybe you put text instead of an index), it will use it as a search keyword much like list, and go on to play any and ALL matches.
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;play : play videos from library using their indexes.  If an index is not found (or maybe you put text instead of an index), it will use it as a search keyword much like list, and go on to play any and ALL matches.  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;key 0 would play the first song in library  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;key 0,4,2 would play the first, fifth, and then third song in library  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;key all would play every single song in the library, in a random order  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OST would play every song with 'OST' in it's name
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OST would play every song with 'OST' in it's name  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;expo : put all (applicable) songs in a big command you can send to a friend, which if they run, lets them download all of the same songs  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;	chooses songs by index, like play  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;remv : delete specified songs by index  
@@ -64,23 +64,23 @@ Space-sensitive!
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`----------------------`  
 
 `utmp play OST`  
-&nbsp;&nbsp;&nbsp;&nbsp;We can list our OST files, but even better would be to PLAY them too. This does that, since OST is recognized as not being a song index.
+&nbsp;&nbsp;&nbsp;&nbsp;We can list our OST files, but even better would be to PLAY them too. This does that, since OST is recognized as not being a song index.  
 
 &nbsp;&nbsp;&nbsp;&nbsp;Possible output:  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Playing songs: OST`
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Cannot play [OST]: Index not found!`
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Using OST as a search keyword...`
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Playing [OST]: /Users/bob/utmp/Arknights OST - Title.mp3`
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`ffplay -i "/Users/bob/utmp/Arknights OST - Title.mp3" -showmode 1 -autoexit -volume 10 -loglevel fatal`
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Playing songs: OST`  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Cannot play [OST]: Index not found!`  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Using OST as a search keyword...`  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Playing [OST]: /Users/bob/utmp/Arknights OST - Title.mp3`  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`ffplay -i "/Users/bob/utmp/Arknights OST - Title.mp3" -showmode 1 -autoexit -volume 10 -loglevel fatal`  
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Playing [OST]: /Users/bob/utmp/Brigador Killers OST - Smile For The Camera (Makeup and Vanity Set) [z3WmEYtpFQY].mp3`
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`ffplay -i "/Users/bob/utmp/Brigador Killers OST - Smile For The Camera (Makeup and Vanity Set) [z3WmEYtpFQY].mp3" -showmode 1 -autoexit -volume 10 -loglevel fatal`
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Playing [OST]: /Users/bob/utmp/Brigador Killers OST - Smile For The Camera (Makeup and Vanity Set) [z3WmEYtpFQY].mp3`  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`ffplay -i "/Users/bob/utmp/Brigador Killers OST - Smile For The Camera (Makeup and Vanity Set) [z3WmEYtpFQY].mp3" -showmode 1 -autoexit -volume 10 -loglevel fatal`  
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Playing [OST]: /Users/bob/utmp/Brigador OST - 1-12 - Continue [ YhT4Xj-qQs].mp3`
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`ffplay -i "/Users/bob/utmp/Brigador OST - 1-12 - Continue [ YhT4Xj-qQs].mp3" -showmode 1 -autoexit -volume 10 -loglevel fatal`
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Playing [OST]: /Users/bob/utmp/Brigador OST - 1-12 - Continue [ YhT4Xj-qQs].mp3`  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`ffplay -i "/Users/bob/utmp/Brigador OST - 1-12 - Continue [ YhT4Xj-qQs].mp3" -showmode 1 -autoexit -volume 10 -loglevel fatal`  
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Playing [OST]: /Users/bob/utmp/Hacknet OST - Sabotage.mp3`
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`ffplay -i "/Users/bob/utmp/Hacknet OST - Sabotage.mp3" -showmode 1 -autoexit -volume 10 -loglevel fatal`
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Playing [OST]: /Users/bob/utmp/Hacknet OST - Sabotage.mp3`  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`ffplay -i "/Users/bob/utmp/Hacknet OST - Sabotage.mp3" -showmode 1 -autoexit -volume 10 -loglevel fatal`  
 
 `utmp find "Never Gonna Give You Up" -p`  
 &nbsp;&nbsp;&nbsp;&nbsp;This is using 'find' mode, so utmp is now searching youtube for the well-known rickroll song.  
@@ -108,4 +108,4 @@ Space-sensitive!
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`Export: /Users/bob/utmp/[-PGI4eCZePY] - In, Vulnerable.mp3 -> -PGI4eCZePY`  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`echo "::UTMP LIBRARY IMPORT::" && utmp down "1332455656" && utmp down "-PGI4eCZePY"`  
 
-&nbsp;&nbsp;&nbsp;&nbsp;Unfortunately, most of my songs come from older versions of utmp where the URL wasn't embedded in the filename, so only 120 (SoundCloud url) and 130 (Youtube url) are able to be exported.
+&nbsp;&nbsp;&nbsp;&nbsp;Unfortunately, most of my songs come from older versions of utmp where the URL wasn't embedded in the filename, so only 120 (SoundCloud url) and 130 (Youtube url) are able to be exported.  
