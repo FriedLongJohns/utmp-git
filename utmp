@@ -146,12 +146,18 @@ elif [ $mode = "play" ]; then
 				((count++))
 		done
 
-		[ $plaid -eq 0 ] && ( echo -e "\033[0;33mCannot play [$index]: Index not found!\033[0;0m" ) && ( echo -e "\033[0;32mUsing "$index" as a search keyword...\033[0;0m" )
+		if [ $plaid -eq 0 ]; then
+			echo -e "\033[0;33mCannot play [$index]: Index not found!\033[0;0m"
+			echo -e "\033[0;32mUsing "$index" as a search keyword...\033[0;0m"
+		else
+			continue
+			#don't do the thing below then
+		fi
 
 		for rawfile in $queue; do
 				file=$(echo $rawfile | tr "^" " ")
 				if [[ "$file" == *"$index"* ]]; then
-					echo -e "\033[0;32mPlaying [$index]: $file\033[0;0m"
+					echo -e "\033[0;32mFound '$index': $file\033[0;0m"
 					echo "ffplay -i \"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
 					ffplay -i "$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
 					plaid=1
