@@ -141,7 +141,7 @@ elif [ $mode = "play" ]; then
 					echo "ffplay -i \"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
 					ffplay -i "$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
 					plaid=1
-					continue
+					break
 				fi
 				((count++))
 		done
