@@ -24,32 +24,53 @@ VOLUME=10
 
 echo ""
 
+got_queue=""
+get_queue () {
+	local prequeue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} | tr " " "^" | sort)
+	local queue=""
+
+	#STAGE 1 : Path removal
+	#some files may not follow utmp's file format and so doing all the cuts on them would destroy their filenames BROKEN
+	for file in $prequeue; do
+		#supposedly char 16 is the first char
+		if [ "${file:16:1}X" == "[X" ]; then # follows utmp format :), chop off url
+			local file=$(echo $file | cut -d ] -f 2- | cut -d - -f 2- )
+		else
+			local file=${file:16:9999}
+		fi
+		# if it didn't, just be OK with that and sort as is
+		local queue="${queue}=${file}"
+	done
+
+	#STAGE 2 : Strip =, Strip   & Sort
+	local queue=$(echo ${queue:2:99999} | sed 's/\^/ /g')
+	IFS="="
+	echo "" > $DIR/queue.txt
+
+	for file in $queue; do
+		#remove leading whitespaces
+		local file=$(echo $file | sed -e 's/^[[:space:]]*//')
+		echo $file >> $DIR/queue.txt
+	done
+
+	local queue=$(cat $DIR/queue.txt | sort)
+	#read from the file and sort :)
+	local queue=$(echo ${queue:1:99999} | tr '\n' '=')
+	got_queue=$queue
+}
+
+
 if [ $mode = "list" ]; then
 	echo -e "\033[0;32mCurrent Stored Library:\033[0;0m"
 	echo -e "\033[0;32mKeyword: $key\033[0;0m"
 	echo -e "\033[0;32m----------------------\033[0;0m"
 
+	get_queue
+
 	count=0
-	prequeue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} | tr " " "^" | sort)
-	queue=""
-
-	#some files may not follow utmp's file format and so doing all the cuts on them would destroy their filenames BROKEN
-	for file in $prequeue; do
-		#supposedly char 16 is the [ char
-		if [ "${file:16:1}X" == "[X" ]; then # follows utmp format :), chop off url
-			file=$(echo $file | cut -d ] -f 2- | cut -d - -f 2- )
-		fi
-		# if it didn't, just be OK with that and sort as is
-
-		queue="${queue} ${file}"
-	done
-
-	queue=$(echo $queue | sort)
-
-	for file in $queue; do
-			file=$(echo $file | tr "^" " ")
+	for file in $got_queue; do
 	    tex="\033[0;32m$count\033[0;0m : $(echo $file | sed 's/.*\///g')"
-			echo -e $tex | grep ".*$key.*"
+			echo -e $tex | grep ".*$key.*" | sort
 			((count++))
 	done
 
@@ -115,9 +136,12 @@ elif [ $mode = "play" ]; then
 
 	trap 'echo -e "\033[0;31m Utmp stopped :::during::: file playback\033[0;0m"; exit 1' SIGINT
 
+	get_queue
+	queue=$got_queue
+
 	if [ "$key" = "all" ]; then
 		echo -e "\033[0;33mPlaying ALL songs!\033[0;0m"
-		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} 2>/dev/null | tr " " "^" | sort -R)
+		# queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} 2>/dev/null | tr " " "^" | sort -R)
 
 		if [ "X$queue" == "X" ]; then
 			echo -e "\033[0;31mThere are no songs!\033[0;0m"
@@ -142,7 +166,7 @@ elif [ $mode = "play" ]; then
 	echo -e "\033[0;32mPlaying songs: ${dexes[@]}\033[0;0m"
 	for index in ${dexes[@]}; do
 		count=0
-		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} 2>/dev/null | tr " " "^")
+		# queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} 2>/dev/null | tr " " "^")
 		plaid=0
 
 		if [ "X$queue" == "X" ]; then
@@ -152,11 +176,10 @@ elif [ $mode = "play" ]; then
 		fi
 
 		for file in $queue; do
-				file=$(echo $file | tr "^" " ")
 		    if [ $count = $index ]; then
 					echo -e "\033[0;32mPlaying [$index]: $file\033[0;0m"
-					echo "ffplay -i \"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
-					ffplay -i "$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
+					echo "ffplay -i $DIR/**\"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
+					ffplay -i $DIR/**"$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
 					plaid=1
 					break
 				fi
@@ -175,8 +198,8 @@ elif [ $mode = "play" ]; then
 				file=$(echo $rawfile | tr "^" " ")
 				if [[ "$file" == *"$index"* ]]; then
 					echo -e "\033[0;32mFound '$index': $file\033[0;0m"
-					echo "ffplay -i \"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
-					ffplay -i "$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
+					echo "ffplay -i $DIR/**\"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
+					ffplay -i $DIR/**"$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
 					plaid=1
 		    fi
 		done
