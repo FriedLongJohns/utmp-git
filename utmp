@@ -86,15 +86,15 @@ elif [ "$mode" = "find" ] || [ "$mode" = "down" ]; then
 
 		trap 'echo -e "\033[0;31m Utmp stopped :::during::: find\033[0;0m"; exit 1' SIGINT
 
-		echo "yt-dlp "$key" -f ba --default-search auto --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s\""
-		yt-dlp "$key" -f ba --default-search auto --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s"
+		echo "$WDIR/yt-dlp.sh "$key" -f ba --default-search auto --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s\""
+		$WDIR/yt-dlp.sh "$key" -f ba --default-search auto --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s"
 	else
 		echo -e "\033[0;32mDownloading from '$key'...\033[0;0m"
 
 		trap 'echo -e "\033[0;31m Utmp stopped :::during::: down\033[0;0m"; exit 1' SIGINT
 
-		echo "yt-dlp "$key" -f ba --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s\""
-		yt-dlp "$key" -f ba --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s"
+		echo "$WDIR/yt-dlp.sh "$key" -f ba --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s\""
+		$WDIR/yt-dlp.sh "$key" -f ba --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s"
 		#still force 1 download because we only move the 1 last download, not all downloaded
 	fi
 
@@ -107,11 +107,11 @@ elif [ "$mode" = "find" ] || [ "$mode" = "down" ]; then
 
 	if [ "$opt" = "-t" ]; then
 		echo -e "\033[0;32m[-t] Playing '$name'\033[0;0m"
-		echo "ffplay -i \"$DIR/$name\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
+		echo "$WDIR/ffplay.sh -i \"$DIR/$name\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
 
 		trap 'echo -e "\033[0;31m Utmp stopped :::during::: file playback\033[0;0m"; exit 1' SIGINT
 
-		ffplay -i "$DIR/$name" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
+		$WDIR/ffplay.sh -i "$DIR/$name" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
 	fi
 
 	if [ "$opt" = "-t" ] || [ "$opt" = "-p" ]; then
@@ -152,8 +152,8 @@ elif [ $mode = "play" ]; then
 		for file in $queue; do
 			file=$(echo $file | tr "^" " ")
 			echo -e "\033[0;32mPlaying $file...\033[0;0m"
-			echo "ffplay -i \"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
-			ffplay -i "$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
+			echo "$WDIR/ffplay.sh -i $DIR/**\"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
+			$WDIR/ffplay.sh -i $DIR/**"$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
 			((count++))
 		done
 
@@ -178,8 +178,8 @@ elif [ $mode = "play" ]; then
 		for file in $queue; do
 		    if [ $count = $index ]; then
 					echo -e "\033[0;32mPlaying [$index]: $file\033[0;0m"
-					echo "ffplay -i $DIR/**\"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
-					ffplay -i $DIR/**"$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
+					echo "$WDIR/ffplay.sh -i $DIR/**\"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
+					$WDIR/ffplay.sh -i $DIR/**"$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
 					plaid=1
 					break
 				fi
@@ -198,8 +198,8 @@ elif [ $mode = "play" ]; then
 				file=$(echo $rawfile | tr "^" " ")
 				if [[ "$file" == *"$index"* ]]; then
 					echo -e "\033[0;32mFound '$index': $file\033[0;0m"
-					echo "ffplay -i $DIR/**\"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
-					ffplay -i $DIR/**"$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
+					echo "$WDIR/ffplay.sh -i $DIR/**\"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
+					$WDIR/ffplay.sh -i $DIR/**"$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
 					plaid=1
 		    fi
 		done
