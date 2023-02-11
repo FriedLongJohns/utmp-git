@@ -156,6 +156,8 @@ if ! [ -x "$(command -v ffmpeg)" ] || ! [ -x "$(command -v ffplay)" ]; then
 	echo -e "\033[0;32mextracting executables\033[0;0m"
 	mv $path/ffmpeg $path/ffmpegfolder
 	cp $path/ffmpegfolder/ffmpeg $path/ffmpeg
+	cp $path/ffmpegfolder/ffprobe $path/ffprobe
+	cp $path/ffmpegfolder/ffplay $path/ffplay
 	rm -R $path/ffmpegfolder
 fi
 
