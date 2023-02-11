@@ -1,28 +1,172 @@
 #!/bin/bash
-shopt -s extglob
-#for nice regex in list expansion things
 
+#-SETUP
+
+#INPUT
 mode=$1
 key=$2
 opt=$3
 what=$4
-
-trap 'echo -e "\033[0;31m Utmp stopped :::during::: unknown state\033[0;0m"; exit 1' SIGINT
-
+#CONSTANTS
 WDIR=$(dirname $0)
+DIR=~/utmp
+TEMPDIR=~/utmp/temp
+VOLUME=10
+#FILE SETUP
+[ ! -d $DIR ] && ( echo "\033[0;32mno existing DIR, creating new directory!\033[0;0m" && mkdir $DIR )
+[ ! -d $TEMPDIR ] && ( echo "\033[0;32mno existing TEMPDIR, creating new directory!\033[0;0m" && mkdir $TEMPDIR )
+#SCRIPT SETUP
+trap 'echo -e "\033[0;31m Utmp stopped :::during::: script setup\033[0;0m"; exit 1' SIGINT
+shopt -s extglob
+#^ for nice regex in list expansion things
+
+#-CHECK FOR DEPENDENCIES
+#os reference:::
+# case "$OSTYPE" in
+#   solaris*) echo "SOLARIS" ;;
+#   darwin*)  echo "OSX" ;;
+#   linux*)   echo "LINUX" ;;
+#   bsd*)     echo "BSD" ;;
+#   msys*)    echo "WINDOWS" ;;
+#   cygwin*)  echo "ALSO WINDOWS" ;;
+#   *)        echo "unknown: $OSTYPE" ;;
+# esac
+#:::
+ostype=${OSTYPE//[0-9.]/}
+if ! [ -x "$(command -v yt-dlp)" ]; then
+	echo -e "\033[0;33myt-dlp missing, attempting install\033[0;0m"
+	if [[ "$ostype" == "darwin" ]] || [[ "$ostype" == "linux" ]] || [[ "$ostype" == "bsd" ]]; then
+		echo -e "\033[0;32mOS: OSX, linux, BSD\033[0;0m"
+
+		if [ -x "$(command -v curl)" ]; then echo -e "\033[0;32mUsing: curl\033[0;0m"
+			sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+		elif [ -x "$(command -v wget)" ]; then echo -e "\033[0;32mUsing: wget\033[0;0m"
+			sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
+		elif [ -x "$(command -v aria2c)" ]; then echo -e "\033[0;32mUsing: aria2c\033[0;0m"
+			sudo aria2c https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp --dir /usr/local/bin -o yt-dlp
+		else
+			echo -e "\033[0;31mFailed to find acceptable package manager\033[0;0m"
+			trap - SIGINT
+			exit 1
+		fi
+
+		sudo chmod a+rx /usr/local/bin/yt-dlp  # Make executable
+
+	elif [[ "$ostype" == "msys" ]] || [[ "$ostype" == "cygwin" ]]; then
+		echo -e "\033[0;32mOS: Windows\033[0;0m"
+
+		if [ -x "$(command -v winget)" ]; then echo -e "\033[0;32mUsing: winget\033[0;0m"
+			winget install yt-dlp
+		elif [ -x "$(command -v choco)" ]; then echo -e "\033[0;32mUsing: choco\033[0;0m"
+			choco install yt-dlp
+		elif [ -x "$(command -v scoop)" ]; then echo -e "\033[0;32mUsing: scoop\033[0;0m"
+			scoop install yt-dlp
+		else
+			echo -e "\033[0;31mFailed to find acceptable package manager\033[0;0m"
+			trap - SIGINT
+			exit 1
+		fi
+
+	elif [[ "$ostype" == "linux-android" ]]; then
+		echo -e "\033[0;32mOS: Termux\033[0;0m"
+		termux-setup-storage       # Allow termux to download files into your phone's storage
+		pkg update && pkg upgrade  # Update all packages
+		pkg install python         # Install python
+		pip install -U yt-dlp      # Install yt-dlp
+
+	else
+		# no clue :(
+		echo -e "\033[0;33mYour operating system is not recognized by utmp!\033[0;0m"
+		echo "(Utmp supports: OSX, Linux, BSD, Windows, and Termux on Android)"
+		echo -e "\033[0;31mWill not attempt to auto-install yt-dlp!\033[0;0m"
+		trap - SIGINT
+		exit 1
+	fi
+fi
+
+#no ffmpeg? clone from git and make
+if ! [ -x "$(command -v ffmpeg)" ] || ! [ -x "$(command -v ffplay)" ]; then
+	echo -e "\033[0;33mffmpeg/ffplay missing, attempting install\033[0;0m"
+	#make sure we have libsdl for ffplay
+	if [ -x "$(command -v sdl2-config)" ]; then
+		echo -e "\033[0;32mInstalling libsdl for ffplay...\033[0;0m"
+		if [[ "$ostype" == "darwin" ]] || [[ "$ostype" == "linux" ]] || [[ "$ostype" == "bsd" ]] || [[ "$ostype" == "linux-android" ]]; then
+			echo -e "\033[0;32mOS: OSX, linux, BSD, Termux\033[0;0m"
+
+			if [[ "$ostype" == "bsd" ]] || [[ "$ostype" == "linux-android" ]]; then
+				if ! [ -x "$(command -v git)" ]; then
+					pkg install git
+				fi
+			fi
+			if [[ "$ostype" == "linux-android" ]]; then
+				termux-setup-storage
+			fi
+
+			git clone https://github.com/libsdl-org/SDL.git -b SDL2 /usr/local/bin/SDL2
+			cd /usr/local/bin/SDL2
+			mkdir build
+			cd build
+			../configure
+			make
+			sudo make install
+			cd $WDIR
+
+		elif [[ "$ostype" == "msys" ]] || [[ "$ostype" == "cygwin" ]]; then
+			echo -e "\033[0;32mOS: Windows\033[0;0m"
+			mkdir ~/Documents/PowerShell/Modules
+			git clone https://github.com/libsdl-org/SDL.git -b ~/Documents/PowerShell/Modules/SDL2
+			cd ~/Documents/PowerShell/Modules/SDL
+			mkdir build
+			cd build
+			../configure
+			make
+			sudo make install
+			cd $WDIR
+
+		else
+			# no clue :(
+			echo -e "\033[0;33mYour operating system is not recognized by utmp!\033[0;0m"
+			echo "(Utmp supports: OSX, Linux, BSD, Windows, and Termux on Android)"
+			echo -e "\033[0;31mWill not attempt to auto-install libsdl!\033[0;0m"
+			trap - SIGINT
+			exit 1
+		fi
+	fi
+
+	echo -e "\033[0;32mlibsdl installed, installing ffmpeg\033[0;0m"
+
+	path="/usr/local/bin"
+	if [[ "$ostype" == "msys" ]] || [[ "$ostype" == "cygwin" ]]; then
+		path="~/Documents/PowerShell/Modules"
+		mkdir $path/Modules
+		#windows has special package placement
+	fi
+
+	echo -e "\033[0;32mgit cloning ffmpeg\033[0;0m"
+	rm -R $path/ffmpeg
+	git clone https://git.ffmpeg.org/ffmpeg.git $path/ffmpeg
+
+	echo -e "\033[0;32mcompiling ffmpeg\033[0;0m"
+	cd $path/ffmpeg
+	./configure
+	make
+	make install
+	cd $WDIR
+
+	echo -e "\033[0;32mextracting executables\033[0;0m"
+	mv $path/ffmpeg $path/ffmpegfolder
+	cp $path/ffmpegfolder/ffmpeg $path/ffmpeg
+	rm -R $path/ffmpegfolder
+fi
+
+
+#no arguments, return manual.
 if [ "X$mode" = "X" ]; then
 	$WDIR/utmp-desc
 	exit 1
 fi
 
-DIR=~/utmp
-TEMPDIR=~/utmp/temp
-VOLUME=10
-
-[ ! -d $DIR ] && ( echo "\033[0;32mno existing DIR, creating new directory!\033[0;0m" && mkdir $DIR )
-[ ! -d $TEMPDIR ] && ( echo "\033[0;32mno existing TEMPDIR, creating new directory!\033[0;0m" && mkdir $TEMPDIR )
-
-echo ""
+echo
 
 got_queue=""
 get_queue () {
@@ -59,6 +203,8 @@ get_queue () {
 	got_queue=$queue
 }
 
+
+trap 'echo -e "\033[0;31m Utmp stopped :::during::: ???\033[0;0m"; exit 1' SIGINT
 
 if [ $mode = "list" ]; then
 	echo -e "\033[0;32mCurrent Stored Library:\033[0;0m"
@@ -316,7 +462,9 @@ elif [ $mode = "remv" ]; then
 		foundf=/tmp/found.$$
 		echo 0 > $foundf
 		count=0
-		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} 2>/dev/null | tr " " "^")
+
+		get_queue
+		queue=$got_queue
 
 		if [ "X$queue" == "X" ]; then
 			echo -e "\033[0;31mThere are no songs!\033[0;0m"
@@ -330,7 +478,7 @@ elif [ $mode = "remv" ]; then
 
 		    if [ $count = $temp ]; then
 					echo -e "\033[0;33mDeleting [$index]: $file\033[0;0m"
-					rm -i "$file"
+					rm -i $DIR/**"$file"
 
 					echo 1 > $foundf
 					((min++))
