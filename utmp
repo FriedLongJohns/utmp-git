@@ -242,7 +242,7 @@ elif [ "$mode" = "find" ] || [ "$mode" = "down" ]; then
 		trap 'echo -e "\033[0;31m Utmp stopped :::during::: down\033[0;0m"; exit 1' SIGINT
 
 		echo "yt-dlp "$key" -f ba --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s\""
-		yt-dlp "$key" -f ba --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s"
+		yt-dlp \""$key"\" -f ba --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s"
 		#still force 1 download because we only move the 1 last download, not all downloaded
 	fi
 
@@ -274,7 +274,7 @@ elif [ "$mode" = "find" ] || [ "$mode" = "down" ]; then
 		fi
 	fi
 
-	echo -e "\033[0;31mFinished!\033[0;0m"
+	echo -e "\033[0;32mFinished!\033[0;0m"
 	trap - SIGINT
 	exit 0
 
@@ -289,21 +289,21 @@ elif [ $mode = "play" ]; then
 
 	if [ "$key" = "all" ]; then
 		echo -e "\033[0;33mPlaying ALL songs!\033[0;0m"
-		# queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} 2>/dev/null | tr " " "^" | sort -R)
+
+		ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} 2>/dev/null | tr " " "^" | sort -R > $TEMPDIR/okie.txt
 
 		if [ "X$queue" == "X" ]; then
 			echo -e "\033[0;31mThere are no songs!\033[0;0m"
 			trap - SIGINT
 			exit 0
 		fi
-
-		for file in $queue; do
+		while read file; do
 			file=$(echo $file | tr "^" " ")
 			echo -e "\033[0;32mPlaying $file...\033[0;0m"
 			echo "ffplay -i \"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
-			ffplay -i "$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
+			ffplay -i $file -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
 			((count++))
-		done
+		done < $TEMPDIR/okie.txt
 
 		echo -e "\033[0;32mFinished!\033[0;0m"
 		trap - SIGINT
