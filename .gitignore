@@ -2,3 +2,5 @@
 !README.md
 !utmp
 !utmp-desc
+!utmp-install
+!utmp-lib.sh

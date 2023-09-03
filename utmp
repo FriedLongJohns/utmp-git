@@ -1,164 +1,57 @@
 #!/bin/bash
+source $(dirname $0)/utmp-lib.sh
 
 #-SETUP
-
+WDIR=$(dirname $0)
 #INPUT
 mode=$1
 key=$2
 opt=$3
 what=$4
-#CONSTANTS
-WDIR=$(dirname $0)
+
+#CONSTANTS YOU CAN CHANGE
 DIR=~/utmp
 TEMPDIR=~/utmp/temp
 VOLUME=10
+#in case you want to put your things somewhere else, and don't want utmp to reinstall them every time:
+# set the corresponding variable to it's call command
+	YTDLP=yt-dlp
+	FFPLAY=ffplay
+	FFMPEG=ffmpeg
+#for those with wacky OSs - change it to one of the ones in utmp-install
+	MOS="changethis"
+#CONSTANTS YOU CAN CHANGE
+
 #FILE SETUP
-[ ! -d $DIR ] && ( echo "\033[0;32mno existing DIR, creating new directory!\033[0;0m" && mkdir $DIR )
-[ ! -d $TEMPDIR ] && ( echo "\033[0;32mno existing TEMPDIR, creating new directory!\033[0;0m" && mkdir $TEMPDIR )
+[ ! -d $DIR ] && ( ech "no existing DIR, creating new directory!" && mkdir $DIR )
+[ ! -d $TEMPDIR ] && ( ech "no existing TEMPDIR, creating new directory!" && mkdir $TEMPDIR )
 #SCRIPT SETUP
-trap 'echo -e "\033[0;31m Utmp stopped :::during::: script setup\033[0;0m"; exit 1' SIGINT
+trap 'echred " Utmp stopped :::during::: script setup"; exit 1' SIGINT
 shopt -s extglob
 #^ for nice regex in list expansion things
 
-#-CHECK FOR DEPENDENCIES
-#os reference:::
-# case "$OSTYPE" in
-#   solaris*) echo "SOLARIS" ;;
-#   darwin*)  echo "OSX" ;;
-#   linux*)   echo "LINUX" ;;
-#   bsd*)     echo "BSD" ;;
-#   msys*)    echo "WINDOWS" ;;
-#   cygwin*)  echo "ALSO WINDOWS" ;;
-#   *)        echo "unknown: $OSTYPE" ;;
-# esac
-#:::
-ostype=${OSTYPE//[0-9.]/}
-if ! [ -x "$(command -v yt-dlp)" ]; then
-	echo -e "\033[0;33myt-dlp missing, attempting install\033[0;0m"
-	if [[ "$ostype" == "darwin" ]] || [[ "$ostype" == "linux" ]] || [[ "$ostype" == "bsd" ]]; then
-		echo -e "\033[0;32mOS: OSX, linux, BSD\033[0;0m"
-
-		if [ -x "$(command -v curl)" ]; then echo -e "\033[0;32mUsing: curl\033[0;0m"
-			sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
-		elif [ -x "$(command -v wget)" ]; then echo -e "\033[0;32mUsing: wget\033[0;0m"
-			sudo wget https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -O /usr/local/bin/yt-dlp
-		elif [ -x "$(command -v aria2c)" ]; then echo -e "\033[0;32mUsing: aria2c\033[0;0m"
-			sudo aria2c https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp --dir /usr/local/bin -o yt-dlp
-		else
-			echo -e "\033[0;31mFailed to find acceptable package manager\033[0;0m"
-			trap - SIGINT
-			exit 1
-		fi
-
-		sudo chmod a+rx /usr/local/bin/yt-dlp  # Make executable
-
-	elif [[ "$ostype" == "msys" ]] || [[ "$ostype" == "cygwin" ]]; then
-		echo -e "\033[0;32mOS: Windows\033[0;0m"
-
-		if [ -x "$(command -v winget)" ]; then echo -e "\033[0;32mUsing: winget\033[0;0m"
-			winget install yt-dlp
-		elif [ -x "$(command -v choco)" ]; then echo -e "\033[0;32mUsing: choco\033[0;0m"
-			choco install yt-dlp
-		elif [ -x "$(command -v scoop)" ]; then echo -e "\033[0;32mUsing: scoop\033[0;0m"
-			scoop install yt-dlp
-		else
-			echo -e "\033[0;31mFailed to find acceptable package manager\033[0;0m"
-			trap - SIGINT
-			exit 1
-		fi
-
-	elif [[ "$ostype" == "linux-android" ]]; then
-		echo -e "\033[0;32mOS: Termux\033[0;0m"
-		termux-setup-storage       # Allow termux to download files into your phone's storage
-		pkg update && pkg upgrade  # Update all packages
-		pkg install python         # Install python
-		pip install -U yt-dlp      # Install yt-dlp
-
-	else
-		# no clue :(
-		echo -e "\033[0;33mYour operating system is not recognized by utmp!\033[0;0m"
-		echo "(Utmp supports: OSX, Linux, BSD, Windows, and Termux on Android)"
-		echo -e "\033[0;31mWill not attempt to auto-install yt-dlp!\033[0;0m"
+die () { # only exit if they replaced one of the necessary inputs with -c
+	if [[ "$mode" = "-c" ]]|| [[ "$key" = "-c" ]]; then
 		trap - SIGINT
-		exit 1
+		exit $1
 	fi
-fi
+}
 
-#no ffmpeg? clone from git and make
-if ! [ -x "$(command -v ffmpeg)" ] || ! [ -x "$(command -v ffplay)" ]; then
-	echo -e "\033[0;33mffmpeg/ffplay missing, attempting install\033[0;0m"
-	#make sure we have libsdl for ffplay
-	if [ -x "$(command -v sdl2-config)" ]; then
-		echo -e "\033[0;32mInstalling libsdl for ffplay...\033[0;0m"
-		if [[ "$ostype" == "darwin" ]] || [[ "$ostype" == "linux" ]] || [[ "$ostype" == "bsd" ]] || [[ "$ostype" == "linux-android" ]]; then
-			echo -e "\033[0;32mOS: OSX, linux, BSD, Termux\033[0;0m"
+if [[ "$opt" = "-c" ]] || [[ "$mode" = "-c" ]]|| [[ "$key" = "-c" ]] || [[ "$what" = "-c" ]]; then
+	#check that all libs/commands installed
+	$WDIR/utmp-install $YTDLP $FFPLAY $FFMPEG $MOS
+	istatus=$?
 
-			if [[ "$ostype" == "bsd" ]] || [[ "$ostype" == "linux-android" ]]; then
-				if ! [ -x "$(command -v git)" ]; then
-					pkg install git
-				fi
-			fi
-			if [[ "$ostype" == "linux-android" ]]; then
-				termux-setup-storage
-			fi
-
-			git clone https://github.com/libsdl-org/SDL.git -b SDL2 /usr/local/bin/SDL2
-			cd /usr/local/bin/SDL2
-			mkdir build
-			cd build
-			../configure
-			make
-			sudo make install
-			cd $WDIR
-
-		elif [[ "$ostype" == "msys" ]] || [[ "$ostype" == "cygwin" ]]; then
-			echo -e "\033[0;32mOS: Windows\033[0;0m"
-			mkdir ~/Documents/PowerShell/Modules
-			git clone https://github.com/libsdl-org/SDL.git -b ~/Documents/PowerShell/Modules/SDL2
-			cd ~/Documents/PowerShell/Modules/SDL
-			mkdir build
-			cd build
-			../configure
-			make
-			sudo make install
-			cd $WDIR
-
-		else
-			# no clue :(
-			echo -e "\033[0;33mYour operating system is not recognized by utmp!\033[0;0m"
-			echo "(Utmp supports: OSX, Linux, BSD, Windows, and Termux on Android)"
-			echo -e "\033[0;31mWill not attempt to auto-install libsdl!\033[0;0m"
-			trap - SIGINT
-			exit 1
-		fi
+	if [ $istatus -eq 1 ]; then
+		echred "UTMP has missing dependencies, please check the file at $WDIR/utmp for advanced guidance"
+		die 1
+	elif [ $istatus -eq 0 ]; then
+		ech "UTMP dependency installs confirmed."
+		die 0
+	else
+		echred "UTMP's install script has broken!"
+		die 1
 	fi
-
-	echo -e "\033[0;32mlibsdl installed, installing ffmpeg\033[0;0m"
-
-	path="/usr/local/bin"
-	if [[ "$ostype" == "msys" ]] || [[ "$ostype" == "cygwin" ]]; then
-		path="~/Documents/PowerShell/Modules"
-		mkdir $path/Modules
-		#windows has special package placement
-	fi
-
-	echo -e "\033[0;32mgit cloning ffmpeg\033[0;0m"
-	rm -R $path/ffmpeg
-	git clone https://git.ffmpeg.org/ffmpeg.git $path/ffmpeg
-
-	echo -e "\033[0;32mcompiling ffmpeg\033[0;0m"
-	cd $path/ffmpeg
-	./configure
-	make
-	make install
-	cd $WDIR
-
-	echo -e "\033[0;32mextracting executables\033[0;0m"
-	mv $path/ffmpeg $path/ffmpegfolder
-	cp $path/ffmpegfolder/ffmpeg $path/ffmpeg
-	cp $path/ffmpegfolder/ffprobe $path/ffprobe
-	cp $path/ffmpegfolder/ffplay $path/ffplay
-	rm -R $path/ffmpegfolder
 fi
 
 
@@ -206,12 +99,12 @@ get_queue () {
 }
 
 
-trap 'echo -e "\033[0;31m Utmp stopped :::during::: ???\033[0;0m"; exit 1' SIGINT
+trap 'echred " Utmp stopped :::during::: ???"; exit 1' SIGINT
 
 if [ $mode = "list" ]; then
-	echo -e "\033[0;32mCurrent Stored Library:\033[0;0m"
-	echo -e "\033[0;32mKeyword: $key\033[0;0m"
-	echo -e "\033[0;32m----------------------\033[0;0m"
+	ech "Current Stored Library:"
+	ech "Keyword: $key"
+	ech "----------------------"
 
 	get_queue
 
@@ -222,112 +115,112 @@ if [ $mode = "list" ]; then
 			((count++))
 	done
 
-	echo -e "\033[0;32m----------------------\033[0;0m"
+	ech "----------------------"
 
 
 elif [ "$mode" = "find" ] || [ "$mode" = "down" ]; then
-	[ -z "$key" ] && echo -e "\033[0;31mNeed <key> to download/find from Youtube!\033[0;0m" && exit 1
+	[ -z "$key" ] && echred "Need <key> to download/find from Youtube!" && exit 1
 	#^ there is key OR I exit now
 
 	if [ $mode = "find" ]; then
-		echo -e "\033[0;32mSearching for '$key'...\033[0;0m"
+		ech "Searching for '$key'..."
 
-		trap 'echo -e "\033[0;31m Utmp stopped :::during::: find\033[0;0m"; exit 1' SIGINT
+		trap 'echred " Utmp stopped :::during::: find"; exit 1' SIGINT
 
-		echo "yt-dlp "$key" -f ba --default-search auto --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s\""
-		yt-dlp "$key" -f ba --default-search auto --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s"
+		echo "$YTDLP "$key" -f ba --default-search auto --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s\""
+		$YTDLP "$key" -f ba --default-search auto --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s"
 	else
-		echo -e "\033[0;32mDownloading from '$key'...\033[0;0m"
+		ech "Downloading from '$key'..."
 
-		trap 'echo -e "\033[0;31m Utmp stopped :::during::: down\033[0;0m"; exit 1' SIGINT
+		trap 'echred " Utmp stopped :::during::: down"; exit 1' SIGINT
 
-		echo "yt-dlp "$key" -f ba --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s\""
-		yt-dlp \""$key"\" -f ba --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s"
+		echo "$YTDLP "$key" -f ba --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s\""
+		$YTDLP \""$key"\" -f ba --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s"
 		#still force 1 download because we only move the 1 last download, not all downloaded
 	fi
 
 	name=$(ls -t $TEMPDIR | tail -1)
-	[ "$name" = "" ] && echo -e "\033[0;31mCould not find downloaded file!\033[0;0m" && echo -e "\033[0;32mDid you forget to use -s while dowloading or not have wifi?\033[0;0m" && trap - SIGINT && exit 0
-	echo -e "\033[0;32mDownloaded result as: $name\033[0;0m"
+	[ "$name" = "" ] && echred "Could not find downloaded file!" && ech "Did you forget to use -s while dowloading or not have wifi?" && trap - SIGINT && exit 0
+	ech "Downloaded result as: $name"
 
 	echo "mv \"$TEMPDIR/$name\" \"$DIR/$name\""
 	mv "$TEMPDIR/$name" "$DIR/$name"
 
 	if [ "$opt" = "-t" ]; then
-		echo -e "\033[0;32m[-t] Playing '$name'\033[0;0m"
-		echo "ffplay -i \"$DIR/$name\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
+		ech "[-t] Playing '$name'"
+		echo "$FFPLAY -i \"$DIR/$name\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
 
-		trap 'echo -e "\033[0;31m Utmp stopped :::during::: file playback\033[0;0m"; exit 1' SIGINT
+		trap 'echred " Utmp stopped :::during::: file playback"; exit 1' SIGINT
 
-		ffplay -i "$DIR/$name" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
+		$FFPLAY -i "$DIR/$name" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
 	fi
 
 	if [ "$opt" = "-t" ] || [ "$opt" = "-p" ]; then
 		read -r -p "Delete file? [n/Y]: " inp
 		if [ "$inp" = "Y" ]; then
-			echo -e "\033[0;33mDeleting $name!\033[0;0m"
+			echwarn "Deleting $name!"
 			echo "rm \"$DIR/$name\""
 			rm "$DIR/$name"
-			echo -e "\033[0;32mDone\033[0;0m"
+			ech "Done"
 		else
-			echo -e "\033[0;32mWill not delete file\033[0;0m"
+			ech "Will not delete file"
 		fi
 	fi
 
-	echo -e "\033[0;32mFinished!\033[0;0m"
+	ech "Finished!"
 	trap - SIGINT
 	exit 0
 
 
 elif [ $mode = "play" ]; then
-	[ -z "$key" ] && echo -e "\033[0;31mNeed <key> to play songs!\033[0;0m" && trap - SIGINT && exit 1
+	[ -z "$key" ] && echred "Need <key> to play songs!" && trap - SIGINT && exit 1
 
-	trap 'echo -e "\033[0;31m Utmp stopped :::during::: file playback\033[0;0m"; exit 1' SIGINT
+	trap 'echred " Utmp stopped :::during::: file playback"; exit 1' SIGINT
 
 	get_queue
 	queue=$got_queue
 
 	if [ "$key" = "all" ]; then
-		echo -e "\033[0;33mPlaying ALL songs!\033[0;0m"
+		echwarn "Playing ALL songs!"
 
 		ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} 2>/dev/null | tr " " "^" | sort -R > $TEMPDIR/okie.txt
 
 		if [ "X$queue" == "X" ]; then
-			echo -e "\033[0;31mThere are no songs!\033[0;0m"
+			echred "There are no songs!"
 			trap - SIGINT
 			exit 0
 		fi
 		while read file; do
 			file=$(echo $file | tr "^" " ")
-			echo -e "\033[0;32mPlaying $file...\033[0;0m"
-			echo "ffplay -i \"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
-			ffplay -i $file -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
+			ech "Playing $file..."
+			echo "$FFPLAY -i \"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
+			$FFPLAY -i $file -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
 			((count++))
 		done < $TEMPDIR/okie.txt
 
-		echo -e "\033[0;32mFinished!\033[0;0m"
+		ech "Finished!"
 		trap - SIGINT
 		exit 0
 	fi
 
 	IFS=',' read -ra dexes <<< "$key"
-	echo -e "\033[0;32mPlaying songs: ${dexes[@]}\033[0;0m"
+	ech "Playing songs: ${dexes[@]}"
 	for index in ${dexes[@]}; do
 		count=0
 		# queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} 2>/dev/null | tr " " "^")
 		plaid=0
 
 		if [ "X$queue" == "X" ]; then
-			echo -e "\033[0;31mThere are no songs!\033[0;0m"
+			echred "There are no songs!"
 			trap - SIGINT
 			exit 0
 		fi
 
 		for file in $queue; do
 		    if [ $count = $index ]; then
-					echo -e "\033[0;32mPlaying [$index]: $file\033[0;0m"
-					echo "ffplay -i $DIR/**\"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
-					ffplay -i $DIR/**"$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
+					ech "Playing [$index]: $file"
+					echo "$FFPLAY -i $DIR/**\"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
+					$FFPLAY -i $DIR/**"$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
 					plaid=1
 					break
 				fi
@@ -335,8 +228,8 @@ elif [ $mode = "play" ]; then
 		done
 
 		if [ $plaid -eq 0 ]; then
-			echo -e "\033[0;33mCannot play [$index]: Index not found!\033[0;0m"
-			echo -e "\033[0;32mUsing "$index" as a search keyword...\033[0;0m"
+			echwarn "Cannot play [$index]: Index not found!"
+			ech "Using "$index" as a search keyword..."
 		else
 			continue
 			#don't do the thing below then
@@ -345,27 +238,27 @@ elif [ $mode = "play" ]; then
 		for rawfile in $queue; do
 				file=$(echo $rawfile | tr "^" " ")
 				if [[ "$file" == *"$index"* ]]; then
-					echo -e "\033[0;32mFound '$index': $file\033[0;0m"
-					echo "ffplay -i $DIR/**\"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
-					ffplay -i $DIR/**"$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
+					ech "Found '$index': $file"
+					echo "$FFPLAY -i $DIR/**\"$file\" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal"
+					$FFPLAY -i $DIR/**"$file" -showmode 1 -autoexit -volume $VOLUME -loglevel fatal
 					plaid=1
 		    fi
 		done
 
-		[ $plaid -eq 0 ] && ( echo -e "\033[0;31mCannot play or find: $index!\033[0;0m" )
+		[ $plaid -eq 0 ] && ( echred "Cannot play or find: $index!" )
 	done
 
 
 elif [ $mode = "expo" ]; then
-	trap 'echo -e "\033[0;31m Utmp stopped :::during::: library export\033[0;0m"; exit 1' SIGINT
+	trap 'echred " Utmp stopped :::during::: library export"; exit 1' SIGINT
 	out="echo \"::UTMP LIBRARY IMPORT::\""
 
 	if [ "$key" = "all" ] || [ -z "$key" ]; then
-		echo -e "\033[0;33mExporting ALL songs!\033[0;0m"
+		echwarn "Exporting ALL songs!"
 		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} 2>/dev/null | tr " " "^")
 
 		if [ "X$queue" == "X" ]; then
-			echo -e "\033[0;31mThere are no songs!\033[0;0m"
+			echred "There are no songs!"
 			trap - SIGINT
 			exit 0
 		fi
@@ -380,9 +273,9 @@ elif [ $mode = "expo" ]; then
 			url=$(echo $url | sed 's#\].*##g')
 
 			if [ "$url" = "" ] || [ "$url" = "$file" ]; then
-				echo -e "\033[0;33m$file has no formatted url, skipping!\033[0;0m"
+				echwarn "$file has no formatted url, skipping!"
 			else
-				echo -e "\033[0;32mExport: $file \033[0;0m->\033[0;32m $url\033[0;0m"
+				ech "Export: $file \033[0;0m->\033[0;32m $url"
 				out="$out && utmp down \"$url\""
 				# echo $out
 			fi
@@ -395,7 +288,7 @@ elif [ $mode = "expo" ]; then
 	fi
 
 	IFS=',' read -ra dexes <<< "$key"
-	echo -e "\033[0;32mExporting songs: ${dexes[@]}\033[0;0m"
+	ech "Exporting songs: ${dexes[@]}"
 	for index in ${dexes[@]}; do
 		foundf=/tmp/found.$$
 		echo 0 > $foundf
@@ -403,7 +296,7 @@ elif [ $mode = "expo" ]; then
 		queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3} 2>/dev/null | tr " " "^")
 
 		if [ "X$queue" == "X" ]; then
-			echo -e "\033[0;31mThere are no songs!\033[0;0m"
+			echred "There are no songs!"
 			trap - SIGINT
 			exit 0
 		fi
@@ -420,9 +313,9 @@ elif [ $mode = "expo" ]; then
 					url=$(echo $url | sed 's#\].*##g')
 
 					if [ "$url" = "" ] || [ "$url" = "$file" ] || [ "$url" = "$cfile" ]; then
-						echo -e "\033[0;33m$file has no formatted url, skipping!\033[0;0m"
+						echwarn "$file has no formatted url, skipping!"
 					else
-						echo -e "\033[0;32mExport: $file \033[0;0m->\033[0;32m $url\033[0;0m"
+						ech "Export: $file \033[0;0m->\033[0;32m $url"
 						out="$out && utmp down \"$url\""
 						# echo $out
 					fi
@@ -433,32 +326,32 @@ elif [ $mode = "expo" ]; then
 		done
 
 		found=$(cat $foundf)
-		[ $found -eq 0 ] && ( echo -e "\033[0;33mCannot export [$index]: File not found!\033[0;0m" )
+		[ $found -eq 0 ] && ( echwarn "Cannot export [$index]: File not found!" )
 		rm $foundf
 	done
 	echo $out
 
 
 elif [ $mode = "remv" ]; then
-	trap 'echo -e "\033[0;31m Utmp stopped :::during::: media deletion\033[0;0m"; exit 1' SIGINT
+	trap 'echred " Utmp stopped :::during::: media deletion"; exit 1' SIGINT
 
 	if [ "$key" = "all" ] || [ -z "$key" ]; then
-		echo -e "\033[0;33mAre you sure you want to delete ALL songs?\033[0;0m"
+		echwarn "Are you sure you want to delete ALL songs?"
 		read -r -p "Proceed? [n/Y]: " inp
 		if [ "$inp" = "Y" ]; then
-			echo -e "\033[0;31mDeleting everything...\033[0;0m"
+			echred "Deleting everything..."
 			rm -R $DIR/*
 			echo "rm -R $DIR/*"
-			echo -e "\033[0;32mFinised deletion.\033[0;0m"
+			ech "Finised deletion."
 		else
-			echo -e "\033[0;32mWill not delete.\033[0;0m"
+			ech "Will not delete."
 			trap - SIGINT
 			exit 1
 		fi
 	fi
 
 	IFS=',' read -ra dexes <<< "$key"
-	echo -e "\033[0;32mDeleting songs: ${dexes[@]}\033[0;0m"
+	ech "Deleting songs: ${dexes[@]}"
 	min=0
 	for index in ${dexes[@]}; do
 		foundf=/tmp/found.$$
@@ -469,7 +362,7 @@ elif [ $mode = "remv" ]; then
 		queue=$got_queue
 
 		if [ "X$queue" == "X" ]; then
-			echo -e "\033[0;31mThere are no songs!\033[0;0m"
+			echred "There are no songs!"
 			trap - SIGINT
 			exit 0
 		fi
@@ -479,7 +372,7 @@ elif [ $mode = "remv" ]; then
 				temp=$(($index-$min))
 
 		    if [ $count = $temp ]; then
-					echo -e "\033[0;33mDeleting [$index]: $file\033[0;0m"
+					echwarn "Deleting [$index]: $file"
 					rm -i $DIR/**"$file"
 
 					echo 1 > $foundf
@@ -489,14 +382,14 @@ elif [ $mode = "remv" ]; then
 		done
 
 		found=$(cat $foundf)
-		[ $found -eq 0 ] && ( echo -e "\033[0;33mCannot delete [$index]: File not found!\033[0;0m" )
+		[ $found -eq 0 ] && ( echwarn "Cannot delete [$index]: File not found!" )
 		rm $foundf
 	done
-	echo -e "\033[0;32mFinished deletion.\033[0;0m"
+	ech "Finished deletion."
 
 
 elif [ $mode = "clen" ]; then
-	trap 'echo -e "\033[0;31m Utmp stopped :::during::: file cleaning\033[0;0m"; exit 1' SIGINT
+	trap 'echred " Utmp stopped :::during::: file cleaning"; exit 1' SIGINT
 
 	queue=$(ls $DIR/{*.wav,*.m4a,*.webm,*.mp3})
 	queue=$(echo $queue | sed "s# /#∆#g" | sed "s# #π#g" | sed "s#∆# #g")
@@ -506,7 +399,7 @@ elif [ $mode = "clen" ]; then
 		pfil="${fil//π/ }"#I am going to go insane
 		nfil="${pfil%.*}"
 		nfilxt="${pfil##*.}"
-		# echo -e "\033[0;32mChecking: $pfil\033[0;0m"
+		# ech "Checking: $pfil"
 
 		for file in $queue; do
 			pfile="${file//π/ }"
@@ -514,7 +407,7 @@ elif [ $mode = "clen" ]; then
 			nfilext="${pfile##*.}"
 
 	    if [ "$nfil" = "$nfile" ] && [ "$nfilxt" != "$nfilext" ]; then
-				echo -e "\033[0;33mFound duplicate: $pfile\033[0;0m"
+				echwarn "Found duplicate: $pfile"
 				if [ "$nfilxt" = "webm" ]; then
 					rm /"$pfile"
 				elif [ "$nfilext" = "webm" ]; then
@@ -531,10 +424,10 @@ elif [ $mode = "clen" ]; then
 		done
 	done
 
-	[ $foundf -eq 0 ] && ( echo -e "\033[0;32mFound no duplicates!\033[0;0m" )
+	[ $foundf -eq 0 ] && ( ech "Found no duplicates!" )
 
 else
-	echo -e "\033[0;31mInvalid mode $mode!\033[0;0m"
+	echred "Invalid mode $mode!"
 	trap - SIGINT
 	echo $out
 	exit 1
