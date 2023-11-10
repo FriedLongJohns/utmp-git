@@ -139,7 +139,7 @@ elif [ "$mode" = "find" ] || [ "$mode" = "down" ]; then
 		trap 'echred " Utmp stopped :::during::: down"; exit 1' SIGINT
 
 		echo "$YTDLP "$key" -f ba --max-downloads 1 --abort-on-error --quiet -o \"$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s\""
-		$YTDLP \""$key"\" -f ba --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s"
+		$YTDLP "$key" -f ba --max-downloads 1 --abort-on-error --quiet -o "$TEMPDIR/[%(id)s]  -  %(title)s.%(ext)s"
 		#still force 1 download because we only move the 1 last download, not all downloaded
 	fi
 
