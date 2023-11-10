@@ -1,6 +1,7 @@
 # Thanks chatGPT for this one
 cmd_exists() {
-  command -v "$1" >/dev/null 2>&1
+  #command -v "$1" >/dev/null 2>&1
+  command -v "$1" 2>&1
 }
 
 ech() {

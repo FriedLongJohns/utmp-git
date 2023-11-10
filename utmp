@@ -37,9 +37,13 @@ die () { # only exit if they replaced one of the necessary inputs with -c
 	fi
 }
 
-if [[ "$opt" = "-c" ]] || [[ "$mode" = "-c" ]]|| [[ "$key" = "-c" ]] || [[ "$what" = "-c" ]]; then
+force=0
+if [[ "$opt" = "-C" ]] || [[ "$mode" = "-C" ]]|| [[ "$key" = "-C" ]] || [[ "$what" = "-C" ]]; then
+	force=1
+fi
+if [[ "$opt" = "-c" ]] || [[ "$mode" = "-c" ]]|| [[ "$key" = "-c" ]] || [[ "$what" = "-c" ]] || [[ $force -eq 1 ]]; then
 	#check that all libs/commands installed
-	$WDIR/utmp-install $YTDLP $FFPLAY $FFMPEG $MOS
+	$WDIR/utmp-install $YTDLP $FFPLAY $FFMPEG $MOS $force
 	istatus=$?
 
 	if [ $istatus -eq 1 ]; then

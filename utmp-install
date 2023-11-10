@@ -6,12 +6,14 @@ FFPLAY=$2
 FFMPEG=$3
 #for those with wacky OSs - change it to one of the ones listed below
 MOS=$4
+#for if this is broken and the user knows that, FORCE reinstall of everything
+FORCE=$5
 
 #OS REF SHEET
 #$OSTYPE       supported  name     treatment
 #solaris       n          solaris  ?
 #arch          n          arch     ?
-#darwin        y          macOS    linux
+#darwin        y          macOS    linux (minus apt)
 #linux         y          ~linux   linux
 #linux-gnu     y          gnu      linux
 #bsd           y          bsd      linux
@@ -26,12 +28,17 @@ clueless() {
 }
 tryagain="Please install one of them manually and try again"
 
+if [[ $FORCE -eq 1 ]]; then
+  echwarn "FORCE REINSTALLING!"
+fi
+
 
 # allow OS override
 ostype=${OSTYPE//[0-9.]/} #strip numbers
 if ! [ "$MOS" == "changethis" ]; then
 	ostype=$MOS
 fi
+
 # install method based on OS
 if [[ "$ostype" == "linux"* ]] || [[ "$ostype" == "darwin"* ]] || [[ "$ostype" == "bsd" ]]; then
   method="linux"
@@ -50,18 +57,18 @@ elif [[ "$ostype" == "termux" ]]; then
 else
   clueless
 fi
-
+ech "Detected OS: $ostype"
 
 #GIT
 check_git() {
   #check for git (why would you not have git??)
-  if ! cmd_exists git; then
+  if ! cmd_exists git || [[ $FORCE -eq 1 ]]; then
     ech "Git not found. Installing git..."
     if cmd_exists pkg; then ech "Using: pkg"
       pkg install git
     elif cmd_exists dnf; then ech "Using: dnf"
       sudo dnf install git
-    elif cmd_exists apt; then ech "Using: apt"
+    elif cmd_exists apt && ! [[ "$ostype" == "darwin"* ]]; then ech "Using: apt"
       sudo apt install git
     elif cmd_exists brew; then ech "Using: brew"
       brew install git
@@ -79,11 +86,11 @@ check_git() {
 
 # Check and install yt-dlp
 check_yt_dlp() {
-  if ! cmd_exists $YTDLP; then
+  if ! cmd_exists $YTDLP || [[ $FORCE -eq 1 ]]; then
     ech "Installing yt-dlp..."
     if [[ "$method" == "linux" ]]; then
       fdown=0
-      if cmd_exists apt; then ech "Using: apt"
+      if cmd_exists apt && ! [[ "$ostype" == "darwin"* ]]; then ech "Using: apt"
         sudo apt install yt-dlp
       elif cmd_exists brew; then ech "Using: brew"
         brew install yt-dlp
@@ -124,10 +131,10 @@ check_yt_dlp() {
 # Check and install if SDL
 #check for sdl
 check_sdl() {
-  if ! cmd_exists sdl2-config; then
+  if ! cmd_exists sdl2-config || [[ $FORCE -eq 1 ]]; then
     ech "SDL library not found. Installing SDL..."
     if [[ "$method" == "linux" || "$method" == "darwin" ]]; then
-      if cmd_exists apt; then ech "Using: apt"
+      if cmd_exists apt && ! [[ "$ostype" == "darwin"* ]]; then ech "Using: apt"
         sudo apt install libsdl2-dev
       elif cmd_exists brew; then ech "Using: brew"
         brew install sdl2
@@ -171,7 +178,7 @@ check_sdl() {
 }
 # Check and install ffmpeg and ffplay
 check_ffmpeg() {
-  if ! cmd_exists $FFMPEG || ! cmd_exists $FFPLAY; then
+  if ! cmd_exists $FFMPEG || ! cmd_exists $FFPLAY || [[ $FORCE -eq 1 ]]; then
     ech "Installing ffmpeg and ffplay..."
     check_sdl
     if cmd_exists apt; then ech "Using: apt"
