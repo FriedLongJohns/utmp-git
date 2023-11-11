@@ -7,7 +7,7 @@ And since we download in .webm/.wav (audio) instead of .mp4, you download videos
 Ten billion errors, but it's probably fine.  
 
 # What can do?  
-`utmp <mode> <key> [-p,-t]`  
+`utmp <mode> <key> [-ptcC]`  
 `go read the utmp-desc file, nerd.`
 
 # Examples  
