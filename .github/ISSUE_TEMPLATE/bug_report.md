@@ -10,7 +10,9 @@ assignees: ''
 **What sad**
 What no work. Less words, please
 
+
 **How make happen**
+`During:` down/play/find/expo/etc...
 Steps to reproduce the behavior:
 1. Open window
 2. Jump
