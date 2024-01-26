@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# this script exists purely for macOS linking for utmp's files
+# it's not for you and I'm too lazy to make it work for other OSs
+
+source $(dirname $0)/utmp-lib.sh
+WDIR=$(dirname $0)
+# ls $WDIR/utmp*
+ln -s $WDIR/utmp* ~/bin/
+# export PATH="$PATH:~/bin/"
