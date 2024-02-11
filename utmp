@@ -92,7 +92,7 @@ get_queue () {
 
 	for file in $queue; do
 		#remove leading whitespaces
-		local file=$(echo $file | sed -e 's/^[[:space:]]*//')
+		local file=$(echo $file | sed -e 's/^[[:space:]]*//' | sed 's|^/||')
 		echo $file >> $DIR/queue.txt
 	done
 

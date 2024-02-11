@@ -64,14 +64,14 @@ check_git() {
   #check for git (why would you not have git??)
   if ! cmd_exists git || [[ $FORCE -eq 1 ]]; then
     ech "Git not found. Installing git..."
-    if cmd_exists pkg; then ech "Using: pkg"
-      pkg install git
+    if cmd_exists brew; then ech "Using: brew"
+      brew install git
     elif cmd_exists dnf; then ech "Using: dnf"
       sudo dnf install git
     elif cmd_exists apt && ! [[ "$ostype" == "darwin"* ]]; then ech "Using: apt"
       sudo apt install git
-    elif cmd_exists brew; then ech "Using: brew"
-      brew install git
+    elif cmd_exists pkg; then ech "Using: pkg"
+      pkg install git
     elif cmd_exists port; then ech "Using: MacPorts/DarwinPorts"
       sudo port install git
     else
@@ -90,10 +90,10 @@ check_yt_dlp() {
     ech "Installing yt-dlp..."
     if [[ "$method" == "linux" ]]; then
       fdown=0
-      if cmd_exists apt && ! [[ "$ostype" == "darwin"* ]]; then ech "Using: apt"
-        sudo apt install yt-dlp
-      elif cmd_exists brew; then ech "Using: brew"
+      if cmd_exists brew; then ech "Using: brew"
         brew install yt-dlp
+      elif cmd_exists apt && ! [[ "$ostype" == "darwin"* ]]; then ech "Using: apt"
+        sudo apt install yt-dlp
       elif cmd_exists curl; then ech "Using: curl (file download)"; fdown=1
         curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
       elif cmd_exists wget; then ech "Using: wget (file download)"; fdown=1
@@ -134,10 +134,10 @@ check_sdl() {
   if ! cmd_exists sdl2-config || [[ $FORCE -eq 1 ]]; then
     ech "SDL library not found. Installing SDL..."
     if [[ "$method" == "linux" || "$method" == "darwin" ]]; then
-      if cmd_exists apt && ! [[ "$ostype" == "darwin"* ]]; then ech "Using: apt"
-        sudo apt install libsdl2-dev
-      elif cmd_exists brew; then ech "Using: brew"
+      if cmd_exists brew; then ech "Using: brew"
         brew install sdl2
+      elif cmd_exists apt && ! [[ "$ostype" == "darwin"* ]]; then ech "Using: apt"
+        sudo apt install libsdl2-dev
       else
         echwarn "brew, apt not found."
         ech "Using: git (manual)"
@@ -181,11 +181,11 @@ check_ffmpeg() {
   if ! cmd_exists $FFMPEG || ! cmd_exists $FFPLAY || [[ $FORCE -eq 1 ]]; then
     ech "Installing ffmpeg and ffplay..."
     check_sdl
-    if cmd_exists apt&& ! [[ "$ostype" == "darwin"* ]]; then ech "Using: apt"
-      sudo apt install ffmpeg
-    elif cmd_exists brew; then ech "Using: brew"
-      brew reinstall ffmpeg
+
+    if cmd_exists brew; then ech "Using: brew"
       brew install ffmpeg
+    elif cmd_exists apt && ! [[ "$ostype" == "darwin"* ]]; then ech "Using: apt"
+      sudo apt install ffmpeg
     else
       ech "Using: git (manual)"
       ech "Compiling and installing ffmpeg..."
