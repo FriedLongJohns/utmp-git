@@ -181,9 +181,10 @@ check_ffmpeg() {
   if ! cmd_exists $FFMPEG || ! cmd_exists $FFPLAY || [[ $FORCE -eq 1 ]]; then
     ech "Installing ffmpeg and ffplay..."
     check_sdl
-    if cmd_exists apt; then ech "Using: apt"
+    if cmd_exists apt&& ! [[ "$ostype" == "darwin"* ]]; then ech "Using: apt"
       sudo apt install ffmpeg
     elif cmd_exists brew; then ech "Using: brew"
+      brew reinstall ffmpeg
       brew install ffmpeg
     else
       ech "Using: git (manual)"
@@ -202,7 +203,7 @@ check_ffmpeg() {
       #c make
     	ech "compiling ffmpeg"
     	cd $path/ffmpeg
-    	./configure
+    	./configure --enable-gpl --enable-version3 --enable-sdl2 --enable-fontconfig --enable-gnutls --enable-iconv --enable-libass --enable-libdav1d --enable-libbluray --enable-libfreetype --enable-libmp3lame --enable-libopencore-amrnb --enable-libopencore-amrwb --enable-libopenjpeg --enable-libopus --enable-libshine --enable-libsnappy --enable-libsoxr --enable-libtheora --enable-libtwolame --enable-libvpx --enable-libwavpack --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxml2 --enable-libzimg --enable-lzma --enable-zlib --enable-gmp --enable-libvidstab --enable-libvorbis --enable-libvo-amrwbenc --enable-libmysofa --enable-libspeex --enable-libxvid --enable-libaom --enable-libmfx --enable-amf --enable-ffnvcodec --enable-cuvid --enable-d3d11va --enable-nvenc --enable-nvdec --enable-dxva2 --enable-avisynth --enable-libopenmpt
     	make
     	make install
     	cd $WDIR
